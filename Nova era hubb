@@ -1,4 +1,39 @@
 --=====================================================
+-- NOVA ERA HUB | WHITELIST POR NOME (SEM CARGO)
+--=====================================================
+
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+
+-- LINK RAW DO GITHUB
+local WHITELIST_URL = "https://raw.githubusercontent.com/emanuelsiqueira242-oss/nova-era-whitelistt/refs/heads/main/whitelist.json"
+
+local success, response = pcall(function()
+    return game:HttpGet(WHITELIST_URL)
+end)
+
+if not success then
+    LocalPlayer:Kick("Erro ao verificar whitelist.")
+    return
+end
+
+local data = HttpService:JSONDecode(response)
+
+-- Nome do jogador
+local playerName = LocalPlayer.Name
+local info = data[playerName]
+
+if not info then
+    LocalPlayer:Kick("Você não está na whitelist do Nova Era Hub.")
+    return
+end
+
+-- Tempo permitido (minutos)
+local allowedMinutes = tonumber(info.tempo) or 0
+local startTime = os.time()
+
+--=====================================================
 -- NOVA ERA HUB | LOGGER DISCORD (FIX)
 --=====================================================
 
