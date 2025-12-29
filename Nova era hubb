@@ -193,7 +193,7 @@ local dropdown = FlingTab:AddDropdown({
 
 -- Atualizar lista de jogadores
 FlingTab:AddButton({
-    Name = "Atualizar mandrakes",
+    Name = "Atualizar lista",
     Callback = function()
         dropdown:Refresh(updatePlayerList(), true)
         OrionLib:MakeNotification({
@@ -206,7 +206,7 @@ FlingTab:AddButton({
 
 -- Alternador para Iniciar/Parar o Fling
 FlingTab:AddToggle({
-    Name = "ESPANCA OS MANDRAKES",
+    Name = "fling potente (faz ate o jogador ser kickado)",
     Default = false,
     Callback = function(value)
         flingEnabled = value
@@ -231,7 +231,7 @@ FlingTab:AddToggle({
         end
     end
 })local Tab = Window:MakeTab({
-    Name = "MORADIA DOS MANDRAKES",
+    Name = "House",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
@@ -248,7 +248,7 @@ Tab:AddTextbox({
 })
 
 Tab:AddButton({
-    Name = "DESTRUIR CASA",
+    Name = "pegar permissão",
     Callback = function()
         local args = {
             "GivePermissionLoopToServer",
@@ -259,7 +259,7 @@ Tab:AddButton({
         game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
     end    
 })local Tab = Window:MakeTab({
-	Name = "SCRIPTS OP",
+	Name = "outros scripts",
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
 })
@@ -307,7 +307,7 @@ loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Ghost-Hub-2
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
 })Tab:AddButton({
-	Name = "AUDIO FE",
+	Name = "AUDIO ALL",
 	Callback = function()
 	-- Criando a GUI principal
 local ScreenGui = Instance.new("ScreenGui")
@@ -317,11 +317,10 @@ ScreenGui.Enabled = false -- Inicialmente o Frame estarÃƒÆ’Ã‚Â¡ invis�
 -- Criando o frame
 local Frame = Instance.new("Frame")
 Frame.Parent = ScreenGui
-Frame.Size = UDim2.new(0, 400, 0, 200)
-Frame.Position = UDim2.new(0.5, -200, 0.5, -100)
+Frame.Size = UDim2.Frame.Size = UDim2.new(0, 300, 0, 200)Dim2.new(0.5, -200, 0.5, -100)
 Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-Frame.BackgroundColor3 = Color3.new(0, 0, 0)
-Frame.BackgroundTransparency = 0.8
+Frame.BackgroundColor3 = Color4.new(0, 0, 0)
+Frame.BackgroundTransparency = 0.7
 Frame.BorderSizePixel = 1
 
 -- Adicionando cantos arredondados ao Frame
@@ -334,8 +333,7 @@ local Label = Instance.new("TextLabel")
 Label.Parent = Frame
 Label.Size = UDim2.new(1, 0, 0.4, 0)
 Label.Position = UDim2.new(0, 0, 0, 0)
-Label.Text = "Put in the ID of a sound to play"
-Label.TextScaled = true
+Label.Text = "Put iLabel.Text = "coloque o id do som para ser tocado (precisa estar com o taser na mao)" true
 Label.TextColor3 = Color3.new(1, 1, 1)
 Label.BackgroundTransparency = 1
 Label.Font = Enum.Font.SciFi
@@ -396,7 +394,7 @@ local function playSoundLocally(audioID)
         currentSound.Volume = 10000000
         currentSound:Play()
 
-        -- Parar o som apÃƒÆ’Ã‚Â³s 20 segundos
+        -- Parar o som apÃƒÆ’Ã‚Â³s 50 segundos
         task.delay(20, function()
             if currentSound then
                 currentSound:Stop()
@@ -424,14 +422,14 @@ Button.MouseButton1Click:Connect(function()
         local args = {
             [1] = game:GetService("Players").LocalPlayer.Character.Taser.Handle,
             [2] = audioID,
-            [3] = 9.99
+            [3] = 10.99
         }
         game:GetService("ReplicatedStorage").RE:FindFirstChild("1Gu1nSound1s"):FireServer(unpack(args))
 
         -- Toca o som localmente
         playSoundLocally(audioID)
     else
-        warn("Por favor, insira um ID vÃƒÆ’Ã‚Â¡lido!")
+        warn("COLOQUE UM ID VALIDO!!!")
     end
 end)
 
@@ -489,7 +487,7 @@ ScreenGui.Enabled = true
       		print("button pressed")
       end    
 })local Tab = Window:MakeTab({
-	Name = "especiais",
+	Name = "tool",
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
 })
