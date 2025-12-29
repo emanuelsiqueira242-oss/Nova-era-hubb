@@ -1,3 +1,88 @@
+--=====================================================
+-- NOVA ERA HUB | LOGGER DISCORD (FIX)
+--=====================================================
+
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+local lp = Players.LocalPlayer
+
+-- Proteção contra execução dupla
+if getgenv().NovaEraLogged then return end
+getgenv().NovaEraLogged = true
+
+-- WEBHOOK
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1454599557416616017/13w-FKs234OFwrp9eeEK5SpiIHvb1BzfPEA11jrCSenJdso99XKdEI2joCRKgSXiz_Gf"
+
+-- Detectar request
+local requestFunc =
+    request or http_request or syn and syn.request or fluxus and fluxus.request
+
+if not requestFunc then
+    warn("[NOVA ERA HUB] Executor sem suporte a request")
+    return
+end
+
+-- Dispositivo
+local device = "Desconhecido"
+if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+    device = "📱 Mobile"
+elseif UserInputService.KeyboardEnabled then
+    device = "💻 PC"
+elseif UserInputService.GamepadEnabled then
+    device = "🎮 Console"
+end
+
+-- Executor
+local executor = "Desconhecido"
+pcall(function()
+    if identifyexecutor then
+        executor = identifyexecutor()
+    elseif getexecutorname then
+        executor = getexecutorname()
+    end
+end)
+
+-- Nome do jogo (SAFE)
+local gameName = "Desconhecido"
+pcall(function()
+    gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
+end)
+
+-- Payload
+local payload = {
+    username = "NOVA ERA HUB LOGGER",
+    embeds = {{
+        title = "🚀 Nova Execução Detectada",
+        color = 65280,
+        fields = {
+            { name = "👤 Jogador", value = lp.Name, inline = true },
+            { name = "🆔 UserId", value = tostring(lp.UserId), inline = true },
+            { name = "🎮 Jogo", value = gameName, inline = false },
+            { name = "🌍 JobId", value = game.JobId, inline = false },
+            { name = "📱 Dispositivo", value = device, inline = true },
+            { name = "🧠 Executor", value = executor, inline = true }
+        },
+        footer = {
+            text = "Nova Era Hub • " .. os.date("%d/%m/%Y %H:%M:%S")
+        }
+    }}
+}
+
+-- Enviar
+requestFunc({
+    Url = WEBHOOK_URL,
+    Method = "POST",
+    Headers = {
+        ["Content-Type"] = "application/json"
+    },
+    Body = HttpService:JSONEncode(payload)
+})
+
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/jensonhirst/Orion/refs/heads/main/source')))()
 
 local Window = OrionLib:MakeWindow({Name = "NOVA ERA HUB", HidePremium = false, SaveConfig = true, ConfigFolder = "Orion"})
