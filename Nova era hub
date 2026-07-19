@@ -354,6 +354,110 @@ local function FlingWithCouch(target)
 end
 
 -- ============================================
+-- 🆕 PUXAR PLAYER - VERSÃO BRINGPLAYERLLL
+-- ============================================
+Troll:AddButton({
+    Name = "Puxar Player",
+    Callback = function()
+        if not selectedPlayerName then
+            warn("Erro: Nenhum jogador selecionado")
+            return
+        end
+        local target = Players:FindFirstChild(selectedPlayerName)
+        if not target or not target.Character then
+            warn("Erro: Jogador alvo não encontrado ou sem personagem")
+            return
+        end
+
+        local char = LocalPlayer.Character
+        if not char then
+            warn("Erro: Personagem do jogador local não encontrado")
+            return
+        end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        local root = char:FindFirstChild("HumanoidRootPart")
+        local tRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+        if not hum or not root or not tRoot then
+            warn("Erro: Componentes necessários não encontrados")
+            return
+        end
+
+        local originalPos = root.Position 
+        ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Clea1rTool1s"):FireServer("ClearAllTools")
+        task.wait(0.2)
+
+        ReplicatedStorage.RE:FindFirstChild("1Too1l"):InvokeServer("PickingTools", "Couch")
+        task.wait(0.3)
+
+        local tool = LocalPlayer.Backpack:FindFirstChild("Couch")
+        if tool then
+            tool.Parent = char
+        end
+        task.wait(0.1)
+
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+        task.wait(0.1)
+
+        hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+        hum.PlatformStand = false
+        cam.CameraSubject = target.Character:FindFirstChild("Head") or tRoot or hum
+
+        local align = Instance.new("BodyPosition")
+        align.Name = "BringPosition"
+        align.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        align.D = 10
+        align.P = 30000
+        align.Position = root.Position
+        align.Parent = tRoot
+
+        task.spawn(function()
+            local angle = 0
+            local startTime = tick()
+            while tick() - startTime < 5 and target and target.Character and target.Character:FindFirstChildOfClass("Humanoid") do
+                local tHum = target.Character:FindFirstChildOfClass("Humanoid")
+                if not tHum or tHum.Sit then break end
+
+                local hrp = target.Character.HumanoidRootPart
+                local adjustedPos = hrp.Position + (hrp.Velocity / 1.5)
+
+                angle = angle + 90
+                root.CFrame = CFrame.new(adjustedPos + Vector3.new(0, 2, 0)) * CFrame.Angles(math.rad(angle), 0, 0)
+                align.Position = root.Position + Vector3.new(2, 0, 0)
+
+                task.wait()
+            end
+
+            align:Destroy()
+            hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+            hum.PlatformStand = false
+            cam.CameraSubject = hum
+
+            for _, p in pairs(char:GetDescendants()) do
+                if p:IsA("BasePart") then
+                    p.Velocity = Vector3.zero
+                    p.RotVelocity = Vector3.zero
+                end
+            end
+
+            task.wait(0.1)
+            root.Anchored = true
+            root.CFrame = CFrame.new(originalPos)
+            task.wait(0.001)
+            root.Anchored = false
+
+            task.wait(0.7)
+            local tool = char:FindFirstChild("Couch")
+            if tool then
+                tool.Parent = LocalPlayer.Backpack
+            end
+
+            task.wait(0.001)
+            ReplicatedStorage.RE:FindFirstChild("1Too1l"):InvokeServer("PickingTools", "Couch")
+        end)
+    end
+})
+
+-- ============================================
 -- FUNÇÃO DE FLING COM BALL
 -- ============================================
 local function FlingWithBall(target)
@@ -482,174 +586,6 @@ Troll:AddButton({
 })
 
 -- ============================================
--- PUXAR PLAYER
--- ============================================
-Troll:AddButton({
-    Name = "Puxar Player",
-    Callback = function()
-        if not selectedPlayerName or not Players:FindFirstChild(selectedPlayerName) then
-            print("Erro: Player não selecionado ou não existe")
-            return
-        end
-        
-        if methodKill == "Ball" then
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Erro",
-                Text = "O METODO PUXAR PLAYER NAO ESTA DISPONIVEL PARA BALL",
-                Duration = 5
-            })
-            return
-        end
-        
-        if methodKill == "Couch" then
-            BringPlayerLLL()
-        elseif methodKill == "Couch Sem ir até o alvo" then
-            BringWithCouch()
-        end
-    end
-})
-
--- ============================================
--- JAIL PLAYER
--- ============================================
-Troll:AddButton({
-    Name = "Jail Player",
-    Callback = function()
-        if not selectedPlayerName or not Players:FindFirstChild(selectedPlayerName) then
-            print("Erro: Player não selecionado ou não existe")
-            return
-        end
-        
-        if methodKill == "Ball" then
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Erro",
-                Text = "O METODO JAIL PLAYER NAO ESTA DISPONIVEL PARA BALL",
-                Duration = 5
-            })
-            return
-        end
-
-        local targetPlayer = Players:FindFirstChild(selectedPlayerName)
-        if not targetPlayer or not targetPlayer.Character then
-            print("Erro: Jogador alvo não encontrado ou sem personagem")
-            return
-        end
-
-        local char = LocalPlayer.Character
-        if not char then
-            print("Erro: Personagem do jogador local não encontrado")
-            return
-        end
-
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if not hum or not root then
-            print("Erro: Componentes do personagem não encontrados")
-            return
-        end
-
-        -- TELEPORTAR PARA A COORDENADA
-        local targetPosition = Vector3.new(500, -27, 276)
-        print("Teleportando para a coordenada: 500, -27, 276")
-        root.CFrame = CFrame.new(targetPosition)
-        task.wait(0.5)
-
-        -- PEGAR O ALVO E TRAZER USANDO O MÉTODO SELECIONADO
-        if methodKill == "Couch" or methodKill == "Couch Sem ir até o alvo" then
-            -- Usa o sistema de puxar com couch para trazer o jogador
-            local couch = nil
-            local args = { [1] = "ClearAllTools" }
-            ReplicatedStorage.RE["1Clea1rTool1s"]:FireServer(unpack(args))
-            task.wait(0.2)
-
-            local args2 = { [1] = "PickingTools", [2] = "Couch" }
-            ReplicatedStorage.RE:FindFirstChild("1Too1l"):InvokeServer(unpack(args2))
-            task.wait(0.3)
-
-            couch = LocalPlayer.Backpack:FindFirstChild("Couch")
-            if not couch then
-                print("Erro: Sofá não encontrado")
-                return
-            end
-
-            couch.Name = "Chaos.Couch"
-            local seat1 = couch:FindFirstChild("Seat1")
-            local seat2 = couch:FindFirstChild("Seat2")
-            local handle = couch:FindFirstChild("Handle")
-            
-            if seat1 then seat1.Disabled = true end
-            if seat2 then seat2.Disabled = true end
-            if handle then handle.Name = "Handle " end
-            
-            couch.Parent = LocalPlayer.Character
-            task.wait(0.1)
-
-            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-            task.wait(0.25)
-
-            local tRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if not tRoot then
-                print("Erro: HumanoidRootPart do alvo não encontrado")
-                return
-            end
-
-            -- Cria força para puxar
-            local tet = Instance.new("BodyVelocity", seat1)
-            tet.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-            tet.P = 30000
-            tet.Velocity = Vector3.new(0, 0, 0)
-            tet.Name = "PullVelocity"
-
-            local angle = 0
-            local startTime = tick()
-            
-            while tick() - startTime < 10 and targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") do
-                local tHum = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-                if tHum and tHum.Sit then break end
-
-                local hrp = targetPlayer.Character.HumanoidRootPart
-                if not hrp then break end
-                
-                angle = angle + 360
-                local pos = hrp.Position
-                
-                seat1.CFrame = CFrame.new(pos + Vector3.new(0, 2, 0)) * CFrame.Angles(math.rad(angle), 0, 0)
-                root.CFrame = CFrame.new(pos + Vector3.new(0, 2, 0)) * CFrame.Angles(math.rad(angle), 0, 0)
-                task.wait()
-            end
-
-            tet:Destroy()
-
-            -- Prende o jogador na coordenada
-            if targetPlayer.Character and targetPlayer.Character:FindFirstChildOfClass("Humanoid") and targetPlayer.Character.Humanoid.Sit then
-                print("Alvo sentou! Mantendo na coordenada...")
-                targetPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-                task.wait(0.2)
-                root.CFrame = CFrame.new(targetPosition)
-                
-                if couch then
-                    couch.Parent = LocalPlayer.Backpack
-                end
-                
-                game:GetService("StarterGui"):SetCore("SendNotification", {
-                    Title = "Jail Player",
-                    Text = "Jogador " .. targetPlayer.Name .. " preso na coordenada (500, -27, 276)!",
-                    Duration = 4
-                })
-            else
-                print("Falha ao prender o jogador")
-                if couch then
-                    couch.Parent = LocalPlayer.Backpack
-                end
-            end
-
-            ReplicatedStorage.RE:FindFirstChild("1Too1l"):InvokeServer("PickingTools", "Couch")
-            ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Clea1rTool1s"):FireServer("ClearAllTools")
-        end
-    end
-})
-
--- ============================================
 -- KILL PLAYER COUCH (COM IR AO ALVO)
 -- ============================================
 local function KillPlayerCouch()
@@ -714,7 +650,7 @@ local function KillPlayerCouch()
             local hrp = target.Character.HumanoidRootPart
             local adjustedPos = hrp.Position + (hrp.Velocity / 1.5)
 
-            angle += 360
+            angle = angle + 90
             root.CFrame = CFrame.new(adjustedPos + Vector3.new(0, 2, 0)) * CFrame.Angles(math.rad(angle), 0, 0)
             align.Position = root.Position + Vector3.new(2, 0, 0)
 
@@ -744,107 +680,6 @@ local function KillPlayerCouch()
         ReplicatedStorage.RE:FindFirstChild("1Too1l"):InvokeServer("PickingTools", "Couch")
         task.wait(0.2)
         root.CFrame = CFrame.new(originalPos)
-    end)
-end
-
--- ============================================
--- BRING PLAYER LLL (COM IR AO ALVO)
--- ============================================
-local function BringPlayerLLL()
-    if not selectedPlayerName then
-        warn("Erro: Nenhum jogador selecionado")
-        return
-    end
-    local target = Players:FindFirstChild(selectedPlayerName)
-    if not target or not target.Character then
-        warn("Erro: Jogador alvo não encontrado ou sem personagem")
-        return
-    end
-
-    local char = LocalPlayer.Character
-    if not char then
-        warn("Erro: Personagem do jogador local não encontrado")
-        return
-    end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    local root = char:FindFirstChild("HumanoidRootPart")
-    local tRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-    if not hum or not root or not tRoot then
-        warn("Erro: Componentes necessários não encontrados")
-        return
-    end
-
-    local originalPos = root.Position 
-    ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Clea1rTool1s"):FireServer("ClearAllTools")
-    task.wait(0.2)
-
-    ReplicatedStorage.RE:FindFirstChild("1Too1l"):InvokeServer("PickingTools", "Couch")
-    task.wait(0.3)
-
-    local tool = LocalPlayer.Backpack:FindFirstChild("Couch")
-    if tool then
-        tool.Parent = char
-    end
-    task.wait(0.1)
-
-    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-    task.wait(0.1)
-
-    hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-    hum.PlatformStand = false
-    cam.CameraSubject = target.Character:FindFirstChild("Head") or tRoot or hum
-
-    local align = Instance.new("BodyPosition")
-    align.Name = "BringPosition"
-    align.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    align.D = 10
-    align.P = 30000
-    align.Position = root.Position
-    align.Parent = tRoot
-
-    task.spawn(function()
-        local angle = 0
-        local startTime = tick()
-        while tick() - startTime < 5 and target and target.Character and target.Character:FindFirstChildOfClass("Humanoid") do
-            local tHum = target.Character:FindFirstChildOfClass("Humanoid")
-            if not tHum or tHum.Sit then break end
-
-            local hrp = target.Character.HumanoidRootPart
-            local adjustedPos = hrp.Position + (hrp.Velocity / 1.5)
-
-            angle += 360
-            root.CFrame = CFrame.new(adjustedPos + Vector3.new(0, 2, 0)) * CFrame.Angles(math.rad(angle), 0, 0)
-            align.Position = root.Position + Vector3.new(2, 0, 0)
-
-            task.wait()
-        end
-
-        align:Destroy()
-        hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-        hum.PlatformStand = false
-        cam.CameraSubject = hum
-
-        for _, p in pairs(char:GetDescendants()) do
-            if p:IsA("BasePart") then
-                p.Velocity = Vector3.zero
-                p.RotVelocity = Vector3.zero
-            end
-        end
-
-        task.wait(0.1)
-        root.Anchored = true
-        root.CFrame = CFrame.new(originalPos)
-        task.wait(0.001)
-        root.Anchored = false
-
-        task.wait(0.7)
-        local tool = char:FindFirstChild("Couch")
-        if tool then
-            tool.Parent = LocalPlayer.Backpack
-        end
-
-        task.wait(0.001)
-        ReplicatedStorage.RE:FindFirstChild("1Too1l"):InvokeServer("PickingTools", "Couch")
     end)
 end
 
@@ -1071,7 +906,7 @@ Troll:AddToggle({
                 while flingActive and target and target.Character and target.Character:FindFirstChildOfClass("Humanoid") do
                     local tHum = target.Character:FindFirstChildOfClass("Humanoid")
                     if tHum.Sit then break end
-                    angle += 360
+                    angle = angle + 90
 
                     local hrp = target.Character.HumanoidRootPart
                     local pos = hrp.Position + hrp.Velocity / 1.5
@@ -1182,7 +1017,7 @@ Troll:AddButton({
                 while jogando and alvo and alvo.Character and alvo.Character:FindFirstChildOfClass("Humanoid") do
                     local alvoHum = alvo.Character:FindFirstChildOfClass("Humanoid")
                     if alvoHum.Sit then break end
-                    angulo += 360
+                    angulo = angulo + 90
 
                     local hrp = alvo.Character.HumanoidRootPart
                     local pos = hrp.Position + hrp.Velocity / 1.5
@@ -1842,7 +1677,7 @@ Troll:AddButton({
                 while flingActive and target and target.Character and target.Character:FindFirstChildOfClass("Humanoid") do
                     local tHum = target.Character:FindFirstChildOfClass("Humanoid")
                     if tHum.Sit then break end
-                    angle += 50
+                    angle = angle + 90
 
                     local hrp = target.Character.HumanoidRootPart
                     local pos = hrp.Position + hrp.Velocity / 1.5
