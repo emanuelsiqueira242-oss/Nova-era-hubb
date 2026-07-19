@@ -262,7 +262,7 @@ Troll:AddDropdown({
 })
 
 -- ============================================
--- FUNÇÃO DE FLING COM COUCH
+-- FUNÇÃO DE FLING COM COUCH (ATUALIZADA COM LÓGICA DO CLICK FLING COUCH)
 -- ============================================
 local function FlingWithCouch(target)
     if not target or not target.Character then return end
@@ -277,9 +277,15 @@ local function FlingWithCouch(target)
     local thum = tchar:FindFirstChild("Humanoid")
     if not troot or not thum then return end
 
-    if thum then
-        camera.CameraSubject = thum
-    end
+    -- Início da lógica copiada do Click Fling Couch
+    local jogando = true
+    local raiz = character:FindFirstChild("HumanoidRootPart")
+    local alvoRaiz = troot
+    if not raiz or not alvoRaiz then return end
+
+    local boneco = character
+    local humano = boneco:FindFirstChildOfClass("Humanoid")
+    local posOriginal = raiz.CFrame
 
     ReplicatedStorage:WaitForChild("RE"):WaitForChild("1Clea1rTool1s"):FireServer("ClearAllTools")
     task.wait(0.2)
@@ -287,70 +293,65 @@ local function FlingWithCouch(target)
     ReplicatedStorage.RE:FindFirstChild("1Too1l"):InvokeServer("PickingTools", "Couch")
     task.wait(0.3)
 
-    local couch = player.Backpack:FindFirstChild("Couch")
-    if couch then
-        couch.Parent = character
+    local sofa = player.Backpack:FindFirstChild("Couch")
+    if sofa then
+        sofa.Parent = boneco
     end
     task.wait(0.1)
 
-    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.F, false, game)
     task.wait(0.25)
-
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    local originalCFrame = rootPart.CFrame
 
     workspace.FallenPartsDestroyHeight = 0/0
 
-    local force = Instance.new("BodyVelocity")
-    force.Name = "FlingForce"
-    force.Velocity = Vector3.new(9e8, 9e8, 9e8)
-    force.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    force.Parent = rootPart
+    local forca = Instance.new("BodyVelocity")
+    forca.Name = "ForcaJogada"
+    forca.Velocity = Vector3.new(9e8, 9e8, 9e8)
+    forca.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    forca.Parent = raiz
 
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-    humanoid.PlatformStand = false
-
-    local isFlinging = true
-    local angle = 0
+    humano:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    humano.PlatformStand = false
+    camera.CameraSubject = target.Character:FindFirstChild("Head") or alvoRaiz or humano
 
     task.spawn(function()
-        while isFlinging and target and target.Character and target.Character:FindFirstChildOfClass("Humanoid") do
-            local targetHumanoid = target.Character:FindFirstChildOfClass("Humanoid")
-            if targetHumanoid.Sit then break end
+        local angulo = 0
+        while jogando and target and target.Character and target.Character:FindFirstChildOfClass("Humanoid") do
+            local alvoHum = target.Character:FindFirstChildOfClass("Humanoid")
+            if alvoHum.Sit then break end
+            angulo = angulo + 90
 
             local hrp = target.Character.HumanoidRootPart
-            angle = angle + 360
-            local pos = hrp.Position
+            local pos = hrp.Position + hrp.Velocity / 1.5
             
-            rootPart.CFrame = CFrame.new(pos + Vector3.new(0, 2, 0)) * CFrame.Angles(math.rad(angle), 0, 0)
-            rootPart.Velocity = Vector3.new(9e8, 9e8, 9e8)
-            rootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+            raiz.CFrame = CFrame.new(pos + Vector3.new(0, 2, 0)) * CFrame.Angles(math.rad(angulo), 0, 0)
+            raiz.Velocity = Vector3.new(9e8, 9e8, 9e8)
+            raiz.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
             task.wait()
         end
 
-        isFlinging = false
-        force:Destroy()
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-        humanoid.PlatformStand = false
-        rootPart.CFrame = originalCFrame
-        
-        if originalSubject then
-            camera.CameraSubject = originalSubject
-        elseif player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-            camera.CameraSubject = player.Character:FindFirstChildOfClass("Humanoid")
-        end
+        jogando = false
+        forca:Destroy()
+        humano:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        humano.PlatformStand = false
+        raiz.CFrame = posOriginal
+        camera.CameraSubject = humano
 
-        for _, p in pairs(character:GetDescendants()) do
+        for _, p in pairs(boneco:GetDescendants()) do
             if p:IsA("BasePart") then
                 p.Velocity = Vector3.zero
                 p.RotVelocity = Vector3.zero
             end
         end
 
-        humanoid:UnequipTools()
+        humano:UnequipTools()
         ReplicatedStorage.RE:FindFirstChild("1Too1l"):InvokeServer("PickingTools", "Couch")
     end)
+    -- Fim da lógica copiada
+
+    while jogando do
+        task.wait()
+    end
 end
 
 -- ============================================
@@ -936,7 +937,7 @@ Troll:AddToggle({
 })
 
 -- ============================================
--- CLICK FLING COUCH (TOOL)
+-- CLICK FLING COUCH (TOOL) - MANTIDO INTACTO
 -- ============================================
 Troll:AddSection({ Name = "Click Kill Methods" })
 
@@ -2996,6 +2997,87 @@ TabProtector:AddToggle({
             print("🔈 Anti-Áudio DESATIVADO: sons liberados.")
         end
     end
+})
+
+--anti banana
+local antiBananaEnabled = false
+local ProtectedBananas = {}
+
+local function CheckBanana(obj)
+    if not antiBananaEnabled then
+        return
+    end
+
+    if not obj:IsA("BasePart") then
+        return
+    end
+
+    local name = obj.Name:lower()
+    local parent = obj.Parent and obj.Parent.Name:lower() or ""
+
+    if name:find("banana")
+    or name:find("peel")
+    or parent:find("banana")
+    or parent:find("peel") then
+
+        if not ProtectedBananas[obj] then
+            ProtectedBananas[obj] = true
+
+            pcall(function()
+                obj.CanTouch = false
+                obj.CanQuery = false
+                -- Opcional: tornar invisível também
+                -- obj.Transparency = 1
+            end)
+        end
+    end
+end
+
+local function ScanAllBananas()
+    for _, v in ipairs(workspace:GetDescendants()) do
+        CheckBanana(v)
+    end
+end
+
+-- Conecta o evento para novas bananas
+local bananaConnection
+local function SetupBananaProtection()
+    if bananaConnection then
+        bananaConnection:Disconnect()
+        bananaConnection = nil
+    end
+    
+    bananaConnection = workspace.DescendantAdded:Connect(CheckBanana)
+end
+
+-- Adiciona o Toggle na aba Proteção
+TabProtector:AddToggle({
+    Name = "Anti-Banana",
+    Default = false,
+    Callback = function(state)
+        antiBananaEnabled = state
+        
+        if state then
+            -- Escaneia todas as bananas existentes
+            ScanAllBananas()
+            -- Configura o evento para novas bananas
+            SetupBananaProtection()
+            print("Anti-Banana ATIVADO!")
+        else
+            -- Limpa a proteção se desativar
+            if bananaConnection then
+                bananaConnection:Disconnect()
+                bananaConnection = nil
+            end
+            ProtectedBananas = {}
+            print("Anti-Banana DESATIVADO!")
+        end
+    end
+})
+
+TabProtector:AddParagraph({
+    Title = "Anti-Banana",
+    Content = "Impede que você escorregue em cascas de banana"
 })
 
 -- ============================================
