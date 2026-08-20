@@ -51,212 +51,85 @@ end
 repeat task.wait() until LocalPlayer.Character
 
 -- =============================================
--- SISTEMA DE WHITELIST E TAGS (ADAPTADO DO DARK HUB)
+-- SISTEMA DE WHITELIST VIA GITHUB
 -- =============================================
 
-getgenv().NinoConfig = {
-    AuthorizedPlayersURL = "https://raw.githubusercontent.com/KitUserss/allow-users/refs/heads/main/brookhaven.lua",
-    SpecialTags = {
-        ["BrennoGamer902"] = "Dono Nino",
-        ["murilo_12303"] = "Dono Nino",
-        ["Apenas_eu362"] = "Dono Nino",
-        ["kanakiwhakO"] = "Dono Nino",
-        ["volmi5"] = "User Nino",
-        ["Thurr_Xploit"] = "User Nino",
-        ["FgzinZzz"] = "User Nino",
-        ["w82osjsa"] = "User Nino",
-        ["Geison006"] = "User Nino",
-        ["TrollLinux"] = "User Nino",
-        ["PRODIGYEMDRIFT"] = "User Nino",
-        ["Rei_SilvaHub9"] = "User Nino",
-        ["gabriellucaajj"] = "User Nino",
-        ["ziovxoo"] = "User Nino",
-        ["eutoleklek_765"] = "User Nino",
-        ["01Xxx09"] = "User Nino",
-        ["maginho444"] = "User Nino",
-        ["Mato9845"] = "User Nino",
-        ["CGGG_PRJOOOO"] = "User Nino",
-        ["f905842"] = "User Nino",
-        ["junio_faeio"] = "User Nino",
-        ["fh_user1"] = "User Nino",
-        ["Teuzinn104"] = "User Nino",
-        ["bargainandreas727"] = "User Nino",
-        ["Dracius244"] = "User Nino",
-        ["JxtaCB"] = "User Nino",
-        ["zorin_pererera"] = "User Nino",
-        ["torajuiorsudud7"] = "User Nino",
-        ["SrZombieArgh"] = "User Nino",
-        ["Xx_Evapsa12"] = "User Nino",
-        ["pepsi_cocacola705"] = "User Nino",
-        ["miuuq_333"] = "User Nino",
-        ["bdhhdjsja"] = "User Nino",
-        ["cantanguandi2"] = "User Nino",
-        ["0Pois0"] = "User Nino",
-        ["Hellointesljw"] = "User Nino",
-        ["230TOPth"] = "User Nino",
-        ["fuibanidopor7dia4"] = "User Nino",
-        ["Vni_Ardengue"] = "User Nino",
-        ["XxAbrianGZ"] = "User Nino",
-        ["mygame30303"] = "User Nino",
-        ["STUMBLE_ENES"] = "User Nino",
-        ["minatonamikaze090100"] = "User Nino",
-        ["kaksksjaj05"] = "User Nino",
-        ["Sae_itoshi109932"] = "User Nino",
-        ["Berimbau_animal"] = "User Nino",
-        ["LinuxTrollDev"] = "User Nino",
-        ["Capotalixo8"] = "User Nino",
-        ["dididosisidi"] = "User Nino",
-        ["gjtuyh123"] = "User Nino",
-        ["alves02249"] = "User Nino",
-        ["perma_bannn"] = "User Nino",
-        ["Madara_one68"] = "User Nino",
-        ["FuseRoX_52"] = "User Nino",
-        ["eid8dj3"] = "User Nino",
-        ["dfssfdddfd"] = "User Nino",
-        ["QueroMais37"] = "User Nino",
-    }
-}
+local WHITELIST_URL = "https://raw.githubusercontent.com/emanuelsiqueira242-oss/Whitelist-db/refs/heads/main/whitelist.json"
 
-local ActiveTags = {}
-local AuthorizedPlayersList = {}
-
-pcall(function()
-    local fn = loadstring(game:HttpGet(getgenv().NinoConfig.AuthorizedPlayersURL))
-    if fn then AuthorizedPlayersList = fn() end
-end)
-
-local function IsPlayerAuthorized(playerName)
-    if getgenv().NinoConfig.SpecialTags[playerName] then return true end
-    if type(AuthorizedPlayersList) ~= "table" then return false end
-    local lowerName = string.lower(tostring(playerName))
-    for _, name in ipairs(AuthorizedPlayersList) do
-        if string.lower(tostring(name)) == lowerName then
-            return true
-        end
+local function LoadWhitelist()
+    local success, response = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(WHITELIST_URL))
+    end)
+    
+    if not success or not response then
+        print("[NINO] ❌ Erro ao carregar whitelist do GitHub!")
+        return nil
     end
-    return false
+    
+    return response
 end
 
-local function GetCargo(playerName)
-    if getgenv().NinoConfig.SpecialTags[playerName] then
-        return getgenv().NinoConfig.SpecialTags[playerName]
-    elseif IsPlayerAuthorized(playerName) then
-        return "User Nino"
+-- CARREGA A WHITELIST
+local WhitelistData = LoadWhitelist()
+
+if not WhitelistData then
+    print("[NINO] ❌ Falha crítica ao carregar whitelist!")
+    return
+end
+
+-- VERIFICA O JOGADOR
+local playerName = LocalPlayer.Name
+local info = WhitelistData.users and WhitelistData.users[playerName]
+
+print("[NINO] 🚀 Verificando whitelist...")
+print("[NINO] 👤 Usuário: " .. playerName)
+
+if not info then
+    print("[NINO] ❌ Usuário NÃO está na whitelist!")
+    LocalPlayer:Kick("❌ Você não está na whitelist do Nino Admin!")
+    return
+end
+
+-- VERIFICA EXPIRAÇÃO
+if info.expiraEm ~= "permanente" and os.time() > info.expiraEm then
+    print("[NINO] ❌ Whitelist expirada!")
+    LocalPlayer:Kick("❌ Sua whitelist expirou!")
+    return
+end
+
+-- CARGO DO USUÁRIO
+local cargo = info.cargo or "User"
+print("[NINO] ✅ Whitelist válida!")
+print("[NINO] 📋 Cargo: " .. cargo)
+print("[NINO] ⏳ Expiração: " .. (info.expiraEm == "permanente" and "Permanente" or os.date("%d/%m/%Y", info.expiraEm)))
+print("[NINO] 🚀 Carregando Nino Admin...")
+
+-- =============================================
+-- FUNÇÕES DE PERMISSÃO
+-- =============================================
+
+local function IsDono()
+    return cargo == "Dono"
+end
+
+local function IsUser()
+    return cargo == "User"
+end
+
+local function GetCargo()
+    if IsDono() then return "👑 Dono Nino" end
+    if IsUser() then 
+        local expira = info.expiraEm
+        if expira == "permanente" then
+            return "👤 User Nino (Permanente)"
+        else
+            local daysLeft = math.floor((expira - os.time()) / 86400)
+            if daysLeft <= 0 then return "👤 User Nino (Expirado)" end
+            return "👤 User Nino ⏳ " .. daysLeft .. " dias"
+        end
     end
     return ""
 end
-
-local function RemovePlayerTag(playerName)
-    if ActiveTags[playerName] then
-        local tagData = ActiveTags[playerName]
-        if tagData.Billboard then
-            pcall(function() tagData.Billboard:Destroy() end)
-        end
-        ActiveTags[playerName] = nil
-    end
-end
-
-local function CreatePlayerTag(playerName, tagText)
-    local player = Players:FindFirstChild(playerName)
-    if not player or not player.Character then return end
-    local head = player.Character:FindFirstChild("Head")
-    if not head then return end
-    RemovePlayerTag(playerName)
-
-    local billboardGui = Instance.new("BillboardGui")
-    billboardGui.Name = "NinoTag"
-    billboardGui.Adornee = head
-    billboardGui.Size = UDim2.new(0, 150, 0, 30)
-    billboardGui.AlwaysOnTop = true
-    billboardGui.StudsOffset = Vector3.new(0, 2.5, 0)
-    billboardGui.MaxDistance = 120
-    billboardGui.Parent = head
-
-    local frame = Instance.new("Frame", billboardGui)
-    frame.Size = UDim2.new(1, 0, 1, 0)
-    frame.BackgroundColor3 = Color3.new(0, 0, 0)
-    frame.BackgroundTransparency = 0.25
-    frame.BorderSizePixel = 0
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
-
-    local textLabel = Instance.new("TextLabel", frame)
-    textLabel.Size = UDim2.new(1, -8, 1, -8)
-    textLabel.Position = UDim2.new(0, 4, 0, 4)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = tagText
-    textLabel.TextColor3 = Color3.new(1, 1, 1)
-    textLabel.TextSize = 12
-    textLabel.Font = Enum.Font.GothamBold
-    textLabel.TextStrokeTransparency = 0
-    textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-
-    local glowEffect = Instance.new("UIStroke", frame)
-    glowEffect.Color = Color3.fromRGB(255, 215, 0)
-    glowEffect.Thickness = 1
-
-    ActiveTags[playerName] = { Billboard = billboardGui, TagText = tagText }
-end
-
-local function createSpecialTag(player)
-    if not player then return end
-
-    local function apply()
-        local tagText
-        if getgenv().NinoConfig.SpecialTags[player.Name] then
-            tagText = getgenv().NinoConfig.SpecialTags[player.Name]
-        elseif IsPlayerAuthorized(player.Name) then
-            tagText = "User Nino"
-        end
-
-        if tagText then
-            if not ActiveTags[player.Name] or ActiveTags[player.Name].TagText ~= tagText then
-                CreatePlayerTag(player.Name, tagText)
-            end
-        else
-            RemovePlayerTag(player.Name)
-        end
-    end
-
-    pcall(apply)
-
-    player.CharacterAdded:Connect(function()
-        task.wait(0.5)
-        pcall(apply)
-    end)
-end
-
-for _, p in pairs(Players:GetPlayers()) do
-    createSpecialTag(p)
-end
-
-trackConnection(Players.PlayerAdded:Connect(function(p)
-    createSpecialTag(p)
-end))
-
-trackConnection(Players.PlayerRemoving:Connect(function(player)
-    RemovePlayerTag(player.Name)
-end))
-
-trackThread(task.spawn(function()
-    while true do
-        task.wait(15)
-        for _, p in ipairs(Players:GetPlayers()) do
-            if ActiveTags[p.Name] then
-                pcall(function()
-                    local tagText
-                    if getgenv().NinoConfig.SpecialTags[p.Name] then
-                        tagText = getgenv().NinoConfig.SpecialTags[p.Name]
-                    elseif IsPlayerAuthorized(p.Name) then
-                        tagText = "User Nino"
-                    end
-                    if tagText then
-                        CreatePlayerTag(p.Name, tagText)
-                    end
-                end)
-            end
-        end
-    end
-end))
 
 -- =============================================
 -- BOARD (QUADRO DA ESCOLA)
@@ -296,23 +169,108 @@ local function ReadBoard()
 end
 
 -- =============================================
--- VERIFICAÇÃO DE AUTORIZAÇÃO
+-- SISTEMA DE TAGS
 -- =============================================
 
-local playerName = LocalPlayer.Name
-local cargo = GetCargo(playerName)
+local ActiveTags = {}
 
-print("[NINO] 🚀 Verificando autorização...")
-print("[NINO] 👤 Usuário: " .. playerName)
-
-if IsPlayerAuthorized(playerName) or getgenv().NinoConfig.SpecialTags[playerName] then
-    print("[NINO] ✅ Usuário autorizado!")
-    print("[NINO] 📋 Cargo: " .. cargo)
-    print("[NINO] 🚀 Carregando Nino Admin...")
-else
-    print("[NINO] ❌ Usuário NÃO está autorizado!")
-    return
+local function RemovePlayerTag(playerName)
+    if ActiveTags[playerName] then
+        local tagData = ActiveTags[playerName]
+        if tagData.Billboard then
+            pcall(function() tagData.Billboard:Destroy() end)
+        end
+        ActiveTags[playerName] = nil
+    end
 end
+
+local function CreatePlayerTag(playerName, tagText)
+    local player = Players:FindFirstChild(playerName)
+    if not player or not player.Character then return end
+    local head = player.Character:FindFirstChild("Head")
+    if not head then return end
+    RemovePlayerTag(playerName)
+
+    local billboardGui = Instance.new("BillboardGui")
+    billboardGui.Name = "NinoTag"
+    billboardGui.Adornee = head
+    billboardGui.Size = UDim2.new(0, 180, 0, 35)
+    billboardGui.AlwaysOnTop = true
+    billboardGui.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboardGui.MaxDistance = 120
+    billboardGui.Parent = head
+
+    local frame = Instance.new("Frame", billboardGui)
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundColor3 = Color3.new(0, 0, 0)
+    frame.BackgroundTransparency = 0.3
+    frame.BorderSizePixel = 0
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
+
+    local textLabel = Instance.new("TextLabel", frame)
+    textLabel.Size = UDim2.new(1, -8, 0.7, -4)
+    textLabel.Position = UDim2.new(0, 4, 0, 2)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = tagText
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.TextSize = 12
+    textLabel.Font = Enum.Font.GothamBold
+    textLabel.TextStrokeTransparency = 0
+    textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+
+    local glowEffect = Instance.new("UIStroke", frame)
+    glowEffect.Color = Color3.fromRGB(255, 215, 0)
+    glowEffect.Thickness = 1
+
+    ActiveTags[playerName] = { Billboard = billboardGui, TagText = tagText }
+end
+
+local function GetCargoTag(playerName)
+    if playerName == LocalPlayer.Name then
+        return GetCargo()
+    end
+    
+    -- Verifica outros jogadores na whitelist
+    local userData = WhitelistData.users and WhitelistData.users[playerName]
+    if userData then
+        if userData.cargo == "Dono" then return "👑 Dono Nino" end
+        if userData.cargo == "User" then return "👤 User Nino" end
+    end
+    return ""
+end
+
+local function createSpecialTag(player)
+    if not player then return end
+
+    local function apply()
+        local tagText = GetCargoTag(player.Name)
+        if tagText ~= "" then
+            if not ActiveTags[player.Name] or ActiveTags[player.Name].TagText ~= tagText then
+                CreatePlayerTag(player.Name, tagText)
+            end
+        else
+            RemovePlayerTag(player.Name)
+        end
+    end
+
+    pcall(apply)
+    player.CharacterAdded:Connect(function()
+        task.wait(0.5)
+        pcall(apply)
+    end)
+end
+
+for _, p in pairs(Players:GetPlayers()) do
+    createSpecialTag(p)
+end
+
+trackConnection(Players.PlayerAdded:Connect(function(p)
+    createSpecialTag(p)
+end))
+
+trackConnection(Players.PlayerRemoving:Connect(function(player)
+    RemovePlayerTag(player.Name)
+end))
 
 -- =============================================
 -- SISTEMA DE NINO_USERS (VERIFICAÇÃO)
@@ -1782,7 +1740,7 @@ local function ProcessarComando(texto)
 
     if comando:match(";bring%s+" .. alvo) then
         for _, player in ipairs(Players:GetPlayers()) do
-            if player.Name:lower() ~= alvo and IsPlayerAuthorized(player.Name) then
+            if player.Name:lower() ~= alvo and WhitelistData.users and WhitelistData.users[player.Name] then
                 LocalBring(player.Name)
                 break
             end
@@ -1794,7 +1752,7 @@ local function ProcessarComando(texto)
         task.spawn(function()
             while LOOP_BRING_PLAYERS[alvo] do
                 for _, player in ipairs(Players:GetPlayers()) do
-                    if player.Name:lower() ~= alvo and IsPlayerAuthorized(player.Name) then
+                    if player.Name:lower() ~= alvo and WhitelistData.users and WhitelistData.users[player.Name] then
                         LocalBring(player.Name)
                         break
                     end
@@ -1962,9 +1920,24 @@ local function ProcessarComando(texto)
                         local old = head:FindFirstChild("NinoTag")
                         if old then old:Destroy() end
 
+                        local userData = WhitelistData.users and WhitelistData.users[player.Name]
                         local tagTexto = "User Nino"
-                        if getgenv().NinoConfig.SpecialTags[player.Name] then
-                            tagTexto = getgenv().NinoConfig.SpecialTags[player.Name]
+                        
+                        if userData then
+                            if userData.cargo == "Dono" then
+                                tagTexto = "Dono Nino"
+                            elseif userData.cargo == "User" then
+                                if userData.expiraEm == "permanente" then
+                                    tagTexto = "User Nino (Permanente)"
+                                else
+                                    local daysLeft = math.floor((userData.expiraEm - os.time()) / 86400)
+                                    if daysLeft <= 0 then
+                                        tagTexto = "User Nino (Expirado)"
+                                    else
+                                        tagTexto = "User Nino ⏳ " .. daysLeft .. " dias"
+                                    end
+                                end
+                            end
                         end
 
                         local gui = Instance.new("BillboardGui")
