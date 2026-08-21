@@ -1,4 +1,5 @@
----- Nino Hub Admin | By BrennoGamer902
+-- Nino Hub Admin | By BrennoGamer902
+-- MODIFICADO: Whitelist funcionando SEM KICK
 
 -- =============================================
 -- SERVIÇOS
@@ -51,7 +52,7 @@ end
 repeat task.wait() until LocalPlayer.Character
 
 -- =============================================
--- SISTEMA DE WHITELIST VIA GITHUB
+-- SISTEMA DE WHITELIST VIA GITHUB (SEM KICK)
 -- =============================================
 
 local WHITELIST_URL = "https://raw.githubusercontent.com/emanuelsiqueira242-oss/Whitelist-db/refs/heads/main/whitelist.json"
@@ -74,102 +75,278 @@ local WhitelistData = LoadWhitelist()
 
 if not WhitelistData then
     print("[NINO] ❌ Falha crítica ao carregar whitelist!")
-    return
+    print("[NINO] ⚠️ Executando em modo restrito (sem whitelist)")
 end
 
 -- VERIFICA O JOGADOR
 local playerName = LocalPlayer.Name
-local info = WhitelistData.users and WhitelistData.users[playerName]
+local info = WhitelistData and WhitelistData.users and WhitelistData.users[playerName]
 
 print("[NINO] 🚀 Verificando whitelist...")
 print("[NINO] 👤 Usuário: " .. playerName)
 
-if not info then
-    print("[NINO] ❌ Usuário NÃO está na whitelist!")
-    LocalPlayer:Kick("❌ Você não está na whitelist do Nino Admin!")
-    return
-end
+-- VARIÁVEL PARA CONTROLAR SE O USUÁRIO É AUTORIZADO
+local isWhitelisted = false
+local cargo = "User"
+local expiraEm = "permanente"
+local motivoAcesso = ""
 
--- VERIFICA EXPIRAÇÃO
-if info.expiraEm ~= "permanente" and os.time() > info.expiraEm then
-    print("[NINO] ❌ Whitelist expirada!")
-    LocalPlayer:Kick("❌ Sua whitelist expirou!")
-    return
+if info then
+    -- VERIFICA EXPIRAÇÃO
+    if info.expiraEm ~= "permanente" and os.time() > info.expiraEm then
+        print("[NINO] ⚠️ Whitelist expirada! Acesso restrito.")
+        isWhitelisted = false
+        cargo = "Expirado"
+        motivoAcesso = "Sua whitelist expirou!"
+    else
+        -- USUÁRIO NA WHITELIST
+        isWhitelisted = true
+        cargo = info.cargo or "User"
+        expiraEm = info.expiraEm or "permanente"
+        print("[NINO] ✅ Whitelist válida!")
+        print("[NINO] 📋 Cargo: " .. cargo)
+        print("[NINO] ⏳ Expiração: " .. (expiraEm == "permanente" and "Permanente" or os.date("%d/%m/%Y", expiraEm)))
+        motivoAcesso = "Acesso concedido!"
+    end
+else
+    print("[NINO] ⚠️ Usuário NÃO está na whitelist!")
+    print("[NINO] ℹ️ Acesso restrito - Painel não será carregado!")
+    isWhitelisted = false
+    cargo = "NaoAutorizado"
+    motivoAcesso = "Você não está na whitelist!"
 end
-
--- CARGO DO USUÁRIO
-local cargo = info.cargo or "User"
-print("[NINO] ✅ Whitelist válida!")
-print("[NINO] 📋 Cargo: " .. cargo)
-print("[NINO] ⏳ Expiração: " .. (info.expiraEm == "permanente" and "Permanente" or os.date("%d/%m/%Y", info.expiraEm)))
-print("[NINO] 🚀 Carregando Nino Admin...")
 
 -- =============================================
 -- FUNÇÕES DE PERMISSÃO
 -- =============================================
 
 local function IsDono()
-    return cargo == "Dono"
+    return isWhitelisted and cargo == "Dono"
 end
 
 local function IsUser()
-    return cargo == "User"
+    return isWhitelisted and (cargo == "User" or cargo == "Dono")
+end
+
+local function IsWhitelisted()
+    return isWhitelisted
 end
 
 local function GetCargo()
+    if not isWhitelisted then 
+        if cargo == "Expirado" then
+            return "⏳ Whitelist Expirada"
+        end
+        return "🚫 Sem Acesso"
+    end
     if IsDono() then return "👑 Dono Nino" end
     if IsUser() then 
-        local expira = info.expiraEm
-        if expira == "permanente" then
+        if expiraEm == "permanente" then
             return "👤 User Nino (Permanente)"
         else
-            local daysLeft = math.floor((expira - os.time()) / 86400)
+            local daysLeft = math.floor((expiraEm - os.time()) / 86400)
             if daysLeft <= 0 then return "👤 User Nino (Expirado)" end
             return "👤 User Nino ⏳ " .. daysLeft .. " dias"
         end
     end
-    return ""
+    return "🚫 Sem Acesso"
+end
+
+local function GetMotivoAcesso()
+    return motivoAcesso
 end
 
 -- =============================================
--- BOARD (QUADRO DA ESCOLA)
+-- VERIFICA SE DEVE CARREGAR O PAINEL
 -- =============================================
 
-local BoardCount = workspace:WaitForChild("WorkspaceCom")
-    :WaitForChild("001_School")
-    :WaitForChild("SchoolDryBoard")
-    :WaitForChild("Words")
-    :WaitForChild("Count")
+local function ShouldLoadAdminPanel()
+    return isWhitelisted
+end
 
-local Words = workspace:WaitForChild("WorkspaceCom")
-    :WaitForChild("001_School")
-    :WaitForChild("SchoolDryBoard")
-    :WaitForChild("Words")
+-- =============================================
+-- MOSTRA STATUS PARA O USUÁRIO (SEM KICK)
+-- =============================================
 
-local BoardLabel = Words:FindFirstChildWhichIsA("TextLabel", true)
+local function ShowAccessStatus()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "NinoAccessStatus"
+    screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    screenGui.DisplayOrder = 999999
+    screenGui.IgnoreGuiInset = true
+    screenGui.ResetOnSpawn = true
 
-if not BoardLabel then
-    warn("[Nino Admin] TextLabel do quadro não encontrado. Aguardando carregar...")
-    repeat
-        task.wait(0.25)
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 500, 0, 150)
+    mainFrame.Position = UDim2.new(0.5, -250, 0.5, -75)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    mainFrame.BackgroundTransparency = 0.15
+    mainFrame.BorderSizePixel = 0
+    mainFrame.ClipsDescendants = true
+    mainFrame.Parent = screenGui
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 16)
+    corner.Parent = mainFrame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = isWhitelisted and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)
+    stroke.Thickness = 3
+    stroke.Transparency = 0.2
+    stroke.Parent = mainFrame
+
+    local icon = Instance.new("TextLabel")
+    icon.Size = UDim2.new(0, 60, 0, 60)
+    icon.Position = UDim2.new(0, 20, 0.5, -30)
+    icon.BackgroundTransparency = 1
+    icon.Text = isWhitelisted and "✅" or "⛔"
+    icon.Font = Enum.Font.GothamBold
+    icon.TextSize = 40
+    icon.TextColor3 = isWhitelisted and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)
+    icon.Parent = mainFrame
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -100, 0, 35)
+    title.Position = UDim2.new(0, 90, 0, 15)
+    title.BackgroundTransparency = 1
+    title.Text = isWhitelisted and "✅ ACESSO CONCEDIDO" or "⛔ ACESSO NEGADO"
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 22
+    title.TextColor3 = isWhitelisted and Color3.fromRGB(100, 255, 150) or Color3.fromRGB(255, 100, 100)
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = mainFrame
+
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Size = UDim2.new(1, -100, 0, 30)
+    subtitle.Position = UDim2.new(0, 90, 0, 55)
+    subtitle.BackgroundTransparency = 1
+    subtitle.Text = isWhitelisted and ("👤 " .. GetCargo()) or ("❌ " .. GetMotivoAcesso())
+    subtitle.Font = Enum.Font.Gotham
+    subtitle.TextSize = 16
+    subtitle.TextColor3 = isWhitelisted and Color3.fromRGB(200, 255, 200) or Color3.fromRGB(255, 200, 200)
+    subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    subtitle.Parent = mainFrame
+
+    local statusDesc = Instance.new("TextLabel")
+    statusDesc.Size = UDim2.new(1, -100, 0, 25)
+    statusDesc.Position = UDim2.new(0, 90, 0, 85)
+    statusDesc.BackgroundTransparency = 1
+    if isWhitelisted then
+        if expiraEm == "permanente" then
+            statusDesc.Text = "🔓 Acesso permanente ao painel"
+        else
+            local daysLeft = math.floor((expiraEm - os.time()) / 86400)
+            statusDesc.Text = "⏳ " .. daysLeft .. " dias restantes"
+        end
+    else
+        statusDesc.Text = "🔒 Painel de admin oculto"
+    end
+    statusDesc.Font = Enum.Font.Gotham
+    statusDesc.TextSize = 14
+    statusDesc.TextColor3 = isWhitelisted and Color3.fromRGB(150, 255, 150) or Color3.fromRGB(255, 150, 150)
+    statusDesc.TextXAlignment = Enum.TextXAlignment.Left
+    statusDesc.Parent = mainFrame
+
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 30, 0, 30)
+    closeBtn.Position = UDim2.new(1, -40, 0, 10)
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Text = "✕"
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 18
+    closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    closeBtn.Parent = mainFrame
+    closeBtn.MouseButton1Click:Connect(function()
+        TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0.5, 0, 0.5, 0)
+        }):Play()
+        task.delay(0.5, function() screenGui:Destroy() end)
+    end)
+
+    -- ANIMAÇÃO DE ENTRADA
+    mainFrame.Position = UDim2.new(0.5, -250, -0.5, -75)
+    mainFrame.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(mainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 500, 0, 150),
+        Position = UDim2.new(0.5, -250, 0.5, -75)
+    }):Play()
+
+    -- AUTO FECHAR APÓS 5 SEGUNDOS
+    task.delay(5, function()
+        if screenGui and screenGui.Parent then
+            TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                Size = UDim2.new(0, 0, 0, 0),
+                Position = UDim2.new(0.5, 0, 0.5, 0)
+            }):Play()
+            task.delay(0.6, function() 
+                pcall(function() screenGui:Destroy() end) 
+            end)
+        end
+    end)
+end
+
+-- MOSTRA STATUS AO INICIAR
+task.spawn(function()
+    task.wait(1)
+    ShowAccessStatus()
+end)
+
+-- =============================================
+-- BOARD (QUADRO DA ESCOLA) - SÓ FUNCIONA SE AUTORIZADO
+-- =============================================
+
+local BoardLabel = nil
+local BoardRemote = nil
+local BoardCount = nil
+
+if ShouldLoadAdminPanel() then
+    pcall(function()
+        BoardCount = workspace:WaitForChild("WorkspaceCom")
+            :WaitForChild("001_School")
+            :WaitForChild("SchoolDryBoard")
+            :WaitForChild("Words")
+            :WaitForChild("Count")
+        
+        local Words = workspace:WaitForChild("WorkspaceCom")
+            :WaitForChild("001_School")
+            :WaitForChild("SchoolDryBoard")
+            :WaitForChild("Words")
+        
         BoardLabel = Words:FindFirstChildWhichIsA("TextLabel", true)
-    until BoardLabel
+        
+        if not BoardLabel then
+            repeat
+                task.wait(0.25)
+                BoardLabel = Words:FindFirstChildWhichIsA("TextLabel", true)
+            until BoardLabel
+        end
+        
+        BoardRemote = ReplicatedStorage:WaitForChild("RE")
+            :WaitForChild("1Schoo1lDr1yBoard1s")
+    end)
+else
+    print("[NINO] ⚠️ Painel NÃO carregado - Usuário não autorizado")
 end
-
-local BoardRemote = ReplicatedStorage:WaitForChild("RE")
-    :WaitForChild("1Schoo1lDr1yBoard1s")
 
 local function WriteBoard(text)
+    if not ShouldLoadAdminPanel() then 
+        print("[NINO] ⚠️ Comando bloqueado - Usuário não autorizado")
+        return 
+    end
     text = tostring(text or "")
-    BoardRemote:FireServer("ReturningBoardName", BoardCount, text)
+    pcall(function()
+        BoardRemote:FireServer("ReturningBoardName", BoardCount, text)
+    end)
 end
 
 local function ReadBoard()
+    if not ShouldLoadAdminPanel() then return "" end
     return BoardLabel and BoardLabel.Text or ""
 end
 
 -- =============================================
--- SISTEMA DE TAGS
+-- SISTEMA DE TAGS - SÓ PARA AUTORIZADOS
 -- =============================================
 
 local ActiveTags = {}
@@ -194,7 +371,7 @@ local function CreatePlayerTag(playerName, tagText)
     local billboardGui = Instance.new("BillboardGui")
     billboardGui.Name = "NinoTag"
     billboardGui.Adornee = head
-    billboardGui.Size = UDim2.new(0, 180, 0, 35)
+    billboardGui.Size = UDim2.new(0, 200, 0, 35)
     billboardGui.AlwaysOnTop = true
     billboardGui.StudsOffset = Vector3.new(0, 2.5, 0)
     billboardGui.MaxDistance = 120
@@ -226,20 +403,30 @@ local function CreatePlayerTag(playerName, tagText)
 end
 
 local function GetCargoTag(playerName)
+    if not IsWhitelisted() then return "" end
+    
     if playerName == LocalPlayer.Name then
         return GetCargo()
     end
     
-    -- Verifica outros jogadores na whitelist
-    local userData = WhitelistData.users and WhitelistData.users[playerName]
+    local userData = WhitelistData and WhitelistData.users and WhitelistData.users[playerName]
     if userData then
         if userData.cargo == "Dono" then return "👑 Dono Nino" end
-        if userData.cargo == "User" then return "👤 User Nino" end
+        if userData.cargo == "User" then 
+            if userData.expiraEm == "permanente" then
+                return "👤 User Nino"
+            else
+                local daysLeft = math.floor((userData.expiraEm - os.time()) / 86400)
+                if daysLeft <= 0 then return "👤 User Nino (Expirado)" end
+                return "👤 User Nino ⏳ " .. daysLeft .. "d"
+            end
+        end
     end
     return ""
 end
 
 local function createSpecialTag(player)
+    if not IsWhitelisted() then return end
     if not player then return end
 
     local function apply()
@@ -260,30 +447,27 @@ local function createSpecialTag(player)
     end)
 end
 
-for _, p in pairs(Players:GetPlayers()) do
-    createSpecialTag(p)
+if IsWhitelisted() then
+    for _, p in pairs(Players:GetPlayers()) do
+        createSpecialTag(p)
+    end
+
+    trackConnection(Players.PlayerAdded:Connect(function(p)
+        createSpecialTag(p)
+    end))
+
+    trackConnection(Players.PlayerRemoving:Connect(function(player)
+        RemovePlayerTag(player.Name)
+    end))
 end
-
-trackConnection(Players.PlayerAdded:Connect(function(p)
-    createSpecialTag(p)
-end))
-
-trackConnection(Players.PlayerRemoving:Connect(function(player)
-    RemovePlayerTag(player.Name)
-end))
-
--- =============================================
--- SISTEMA DE NINO_USERS (VERIFICAÇÃO)
--- =============================================
-
-local NINO_USERS = {}
-NINO_USERS[LocalPlayer.Name] = true
 
 -- =============================================
 -- FUNÇÃO: CRIAR ANÚNCIO BONITO
 -- =============================================
 
 local function CriarAnuncioBonito(remetente, texto)
+    if not IsWhitelisted() then return end
+    
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "NinoAnnouncement"
     screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -502,7 +686,7 @@ local function CriarAnuncioBonito(remetente, texto)
 end
 
 -- =============================================
--- FUNÇÕES DE COMANDOS
+-- FUNÇÕES DE COMANDOS - SÓ FUNCIONAM SE AUTORIZADO
 -- =============================================
 
 local TEMP_MODS = {}
@@ -524,6 +708,7 @@ local function GetPlayerRootPart(player)
 end
 
 local function KillPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
     local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
@@ -534,6 +719,7 @@ local function KillPlayer(targetPlayer)
 end
 
 local function LoopKillPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer then return false end
     LOOP_KILL_PLAYERS[targetPlayer.Name] = true
     task.spawn(function()
@@ -552,6 +738,7 @@ local function UnloopKillPlayer(targetPlayer)
 end
 
 local function InvisibleJailPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
 
     if INVISIBLE_JAILED_PLAYERS[targetPlayer.Name] then
@@ -625,6 +812,7 @@ local function InvisibleJailPlayer(targetPlayer)
 end
 
 local function InvisibleUnjailPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not INVISIBLE_JAILED_PLAYERS[targetPlayer.Name] then return false end
     local jailData = INVISIBLE_JAILED_PLAYERS[targetPlayer.Name]
     if jailData.jailModel and jailData.jailModel.Parent then jailData.jailModel:Destroy() end
@@ -637,6 +825,7 @@ local function InvisibleUnjailPlayer(targetPlayer)
 end
 
 local function ExplodirPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
     local humanoidRootPart = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not humanoidRootPart then return false end
@@ -669,6 +858,7 @@ local function ExplodirPlayer(targetPlayer)
 end
 
 local function LocalBring(authorName)
+    if not IsWhitelisted() then return end
     local author = Players:FindFirstChild(authorName)
     if not author then return end
     local authorRoot = GetPlayerRootPart(author)
@@ -685,6 +875,7 @@ local function UnloopBringPlayer(targetPlayer)
 end
 
 local function TPTrollPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
     local hrp = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
@@ -699,6 +890,7 @@ local function TPTrollPlayer(targetPlayer)
 end
 
 local function FloatPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
     local targetHrp = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
     local targetHumanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -728,6 +920,7 @@ local function FloatPlayer(targetPlayer)
 end
 
 local function LagPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
     for i = 1, 50 do
         task.spawn(function()
@@ -763,6 +956,7 @@ local function LagPlayer(targetPlayer)
 end
 
 local function CastigoPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
 
     if CASTIGO_PLAYERS[targetPlayer.Name] then
@@ -845,6 +1039,7 @@ local function CastigoPlayer(targetPlayer)
 end
 
 local function DescastigoPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not CASTIGO_PLAYERS[targetPlayer.Name] then return false end
     local cd = CASTIGO_PLAYERS[targetPlayer.Name]
     if cd.jailModel and cd.jailModel.Parent then cd.jailModel:Destroy() end
@@ -857,6 +1052,7 @@ local function DescastigoPlayer(targetPlayer)
 end
 
 local function CriarJumpscareLocal(imageId, audioId)
+    if not IsWhitelisted() then return false end
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "JumpscareFullscreen"
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
@@ -907,6 +1103,7 @@ local function CriarJumpscareLocal(imageId, audioId)
 end
 
 local function TheRakeJumpscare()
+    if not IsWhitelisted() then return end
     local SoundService = game:GetService("SoundService")
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "FullJumpscare"
@@ -954,6 +1151,7 @@ local function TheRakeJumpscare()
 end
 
 local function SitPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
     local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then humanoid.Sit = true; return true end
@@ -961,6 +1159,7 @@ local function SitPlayer(targetPlayer)
 end
 
 local function LoopSitPlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer then return false end
     LOOP_SIT_PLAYERS[targetPlayer.Name] = true
     task.spawn(function()
@@ -982,6 +1181,7 @@ local function UnloopSitPlayer(targetPlayer)
 end
 
 local function FirePlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
     local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
@@ -996,6 +1196,7 @@ local function FirePlayer(targetPlayer)
 end
 
 local function LoopFirePlayer(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer then return false end
     LOOP_FIRE_PLAYERS[targetPlayer.Name] = true
     task.spawn(function()
@@ -1014,6 +1215,7 @@ local function UnloopFirePlayer(targetPlayer)
 end
 
 local function TransformIntoGoner()
+    if not IsWhitelisted() then return end
     local RS = game:GetService("ReplicatedStorage")
     RS:WaitForChild("Remotes"):WaitForChild("ChangeCharacterBody"):InvokeServer(unpack({{
         116253341067642, 110703630520331, 119263803737569,
@@ -1124,6 +1326,7 @@ end
 local FloppaRunning = false
 
 local function FloppaRain()
+    if not IsWhitelisted() then return end
     FloppaRunning = true
 
     local sky = Instance.new("Sky")
@@ -1190,6 +1393,7 @@ local function FloppaRain()
 end
 
 local function StopFloppa()
+    if not IsWhitelisted() then return end
     FloppaRunning = false
     for _, obj in ipairs(Workspace:GetChildren()) do
         if obj:IsA("Part") and obj.Size == Vector3.new(2,2,2) then
@@ -1210,6 +1414,7 @@ local function StopFloppa()
 end
 
 local function DomainExpansion(targetPlayer)
+    if not IsWhitelisted() then return false end
     if not targetPlayer or not targetPlayer.Character then return false end
     local targetHrp = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not targetHrp then return false end
@@ -1581,6 +1786,10 @@ end
 
 local function ProcessarComando(texto)
     if not texto or texto == "" then return end
+    if not IsWhitelisted() then 
+        print("[NINO] ⚠️ Comando ignorado - Usuário não autorizado")
+        return 
+    end
 
     local comando = texto:lower()
     local alvo = LocalPlayer.Name:lower()
@@ -1966,10 +2175,10 @@ local function ProcessarComando(texto)
 end
 
 -- =============================================
--- ESCUTA O BOARD
+-- ESCUTA O BOARD - SÓ SE AUTORIZADO
 -- =============================================
 
-if BoardLabel then
+if ShouldLoadAdminPanel() and BoardLabel then
     trackConnection(BoardLabel:GetPropertyChangedSignal("Text"):Connect(function()
         local raw = BoardLabel.Text
         if not raw or raw == "" or raw == " " then return end
@@ -1984,12 +2193,18 @@ if BoardLabel then
         end
     end)
 else
-    warn("[Nino Admin] BoardLabel não foi encontrado, comandos pelo quadro desativados.")
+    warn("[Nino Admin] Board não disponível ou usuário não autorizado.")
 end
 
 -- =============================================
--- CARREGAR WINDUI
+-- CARREGAR WINDUI - SÓ SE AUTORIZADO
 -- =============================================
+
+if not ShouldLoadAdminPanel() then
+    print("[NINO] ⛔ Painel NÃO carregado - Usuário não autorizado")
+    print("[NINO] ℹ️ Motivo: " .. GetMotivoAcesso())
+    return
+end
 
 local Version = "1.4.0"
 local WindUI
