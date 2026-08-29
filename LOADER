@@ -5,6 +5,8 @@ local TitleLabel = Instance.new("TextLabel")
 local CloseButton = Instance.new("TextButton")
 local BrookhavenButton = Instance.new("TextButton")
 local MM2Button = Instance.new("TextButton")
+local PrisonLifeButton = Instance.new("TextButton")
+local StealEggButton = Instance.new("TextButton")
 local ExecuteButton = Instance.new("TextButton")
 local StatusLabel = Instance.new("TextLabel")
 local GlowEffect = Instance.new("ImageLabel")
@@ -13,14 +15,16 @@ local GlowEffect = Instance.new("ImageLabel")
 local PlaceID = game.PlaceId
 local BROOKHAVEN_ID = 4924922222
 local MM2_ID = 142823291
+local PRISON_LIFE_ID = 155615604
+local STEAL_EGG_ID = 107778070777162
 
 -- Criar GUI
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
--- Frame principal (esticado para os lados)
-MainFrame.Size = UDim2.new(0, 400, 0, 350)
-MainFrame.Position = UDim2.new(0.5, -200, 0.5, -175)
+-- Frame principal (tamanho reduzido)
+MainFrame.Size = UDim2.new(0, 350, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 3
@@ -31,7 +35,7 @@ MainFrame.Parent = ScreenGui
 UICorner.CornerRadius = UDim.new(0, 15)
 UICorner.Parent = MainFrame
 
--- Efeito de brilho (glow)
+-- Efeito de brilho
 GlowEffect.Size = UDim2.new(1.15, 0, 1.15, 0)
 GlowEffect.Position = UDim2.new(-0.075, 0, -0.075, 0)
 GlowEffect.BackgroundTransparency = 1
@@ -40,9 +44,9 @@ GlowEffect.ImageColor3 = Color3.fromRGB(200, 0, 0)
 GlowEffect.ImageTransparency = 0.6
 GlowEffect.Parent = MainFrame
 
--- Título "Loader Nino Hub"
-TitleLabel.Size = UDim2.new(1, -60, 0, 35)
-TitleLabel.Position = UDim2.new(0, 30, 0, 10)
+-- Título
+TitleLabel.Size = UDim2.new(1, -60, 0, 30)
+TitleLabel.Position = UDim2.new(0, 30, 0, 8)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Text = "Loader Nino Hub"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
@@ -52,24 +56,22 @@ TitleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 TitleLabel.TextStrokeTransparency = 0.3
 TitleLabel.Parent = MainFrame
 
--- Botão Fechar (X)
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -38, 0, 8)
+-- Botão Fechar
+CloseButton.Size = UDim2.new(0, 25, 0, 25)
+CloseButton.Position = UDim2.new(1, -33, 0, 6)
 CloseButton.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
 CloseButton.BorderSizePixel = 2
 CloseButton.BorderColor3 = Color3.fromRGB(200, 0, 0)
-CloseButton.Text = "✕"
+CloseButton.Text = "X"
 CloseButton.TextColor3 = Color3.fromRGB(255, 0, 0)
 CloseButton.TextScaled = true
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Parent = MainFrame
 
--- Corner do botão fechar
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 5)
 CloseCorner.Parent = CloseButton
 
--- Efeito hover no fechar
 CloseButton.MouseEnter:Connect(function()
     CloseButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
     CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -80,7 +82,6 @@ CloseButton.MouseLeave:Connect(function()
     CloseButton.TextColor3 = Color3.fromRGB(255, 0, 0)
 end)
 
--- Função fechar
 CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
@@ -88,29 +89,27 @@ end)
 -- Linha decorativa
 local Line1 = Instance.new("Frame")
 Line1.Size = UDim2.new(0.9, 0, 0, 2)
-Line1.Position = UDim2.new(0.05, 0, 0, 55)
+Line1.Position = UDim2.new(0.05, 0, 0, 48)
 Line1.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 Line1.BorderSizePixel = 0
 Line1.Parent = MainFrame
 
--- Botão Brookhaven (lado esquerdo)
-BrookhavenButton.Size = UDim2.new(0, 175, 0, 50)
-BrookhavenButton.Position = UDim2.new(0.05, 0, 0, 80)
+-- Botão Brookhaven (reduzido)
+BrookhavenButton.Size = UDim2.new(0, 150, 0, 32)
+BrookhavenButton.Position = UDim2.new(0.05, 0, 0, 62)
 BrookhavenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 BrookhavenButton.BorderSizePixel = 2
 BrookhavenButton.BorderColor3 = Color3.fromRGB(200, 0, 0)
-BrookhavenButton.Text = "🏠 Brookhaven RP"
+BrookhavenButton.Text = "Brookhaven RP"
 BrookhavenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 BrookhavenButton.TextScaled = true
 BrookhavenButton.Font = Enum.Font.GothamBold
 BrookhavenButton.Parent = MainFrame
 
--- Corner do botão Brookhaven
 local BtnCorner1 = Instance.new("UICorner")
 BtnCorner1.CornerRadius = UDim.new(0, 8)
 BtnCorner1.Parent = BrookhavenButton
 
--- Efeito hover Brookhaven
 BrookhavenButton.MouseEnter:Connect(function()
     BrookhavenButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     BrookhavenButton.BorderColor3 = Color3.fromRGB(255, 100, 100)
@@ -121,24 +120,22 @@ BrookhavenButton.MouseLeave:Connect(function()
     BrookhavenButton.BorderColor3 = Color3.fromRGB(200, 0, 0)
 end)
 
--- Botão MM2 (lado direito)
-MM2Button.Size = UDim2.new(0, 175, 0, 50)
-MM2Button.Position = UDim2.new(0.53, 0, 0, 80)
+-- Botão MM2 (reduzido)
+MM2Button.Size = UDim2.new(0, 150, 0, 32)
+MM2Button.Position = UDim2.new(0.53, 0, 0, 62)
 MM2Button.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MM2Button.BorderSizePixel = 2
 MM2Button.BorderColor3 = Color3.fromRGB(200, 0, 0)
-MM2Button.Text = "🔪 Murder Mystery 2"
+MM2Button.Text = "Murder Mystery 2"
 MM2Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 MM2Button.TextScaled = true
 MM2Button.Font = Enum.Font.GothamBold
 MM2Button.Parent = MainFrame
 
--- Corner do botão MM2
 local BtnCorner2 = Instance.new("UICorner")
 BtnCorner2.CornerRadius = UDim.new(0, 8)
 BtnCorner2.Parent = MM2Button
 
--- Efeito hover MM2
 MM2Button.MouseEnter:Connect(function()
     MM2Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     MM2Button.BorderColor3 = Color3.fromRGB(255, 100, 100)
@@ -152,141 +149,280 @@ end)
 -- Linha decorativa 2
 local Line2 = Instance.new("Frame")
 Line2.Size = UDim2.new(0.9, 0, 0, 2)
-Line2.Position = UDim2.new(0.05, 0, 0, 145)
+Line2.Position = UDim2.new(0.05, 0, 0, 108)
 Line2.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 Line2.BorderSizePixel = 0
 Line2.Parent = MainFrame
 
--- Botão Execute (centralizado)
-ExecuteButton.Size = UDim2.new(0, 200, 0, 50)
-ExecuteButton.Position = UDim2.new(0.5, -100, 0, 170)
+-- Botão Prison Life (reduzido)
+PrisonLifeButton.Size = UDim2.new(0, 150, 0, 32)
+PrisonLifeButton.Position = UDim2.new(0.05, 0, 0, 122)
+PrisonLifeButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+PrisonLifeButton.BorderSizePixel = 2
+PrisonLifeButton.BorderColor3 = Color3.fromRGB(200, 0, 0)
+PrisonLifeButton.Text = "Prison Life"
+PrisonLifeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+PrisonLifeButton.TextScaled = true
+PrisonLifeButton.Font = Enum.Font.GothamBold
+PrisonLifeButton.Parent = MainFrame
+
+local BtnCorner3 = Instance.new("UICorner")
+BtnCorner3.CornerRadius = UDim.new(0, 8)
+BtnCorner3.Parent = PrisonLifeButton
+
+PrisonLifeButton.MouseEnter:Connect(function()
+    PrisonLifeButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    PrisonLifeButton.BorderColor3 = Color3.fromRGB(255, 100, 100)
+end)
+
+PrisonLifeButton.MouseLeave:Connect(function()
+    PrisonLifeButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    PrisonLifeButton.BorderColor3 = Color3.fromRGB(200, 0, 0)
+end)
+
+-- Botão Steal a Egg (reduzido)
+StealEggButton.Size = UDim2.new(0, 150, 0, 32)
+StealEggButton.Position = UDim2.new(0.53, 0, 0, 122)
+StealEggButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+StealEggButton.BorderSizePixel = 2
+StealEggButton.BorderColor3 = Color3.fromRGB(200, 0, 0)
+StealEggButton.Text = "Steal a Egg"
+StealEggButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+StealEggButton.TextScaled = true
+StealEggButton.Font = Enum.Font.GothamBold
+StealEggButton.Parent = MainFrame
+
+local BtnCorner4 = Instance.new("UICorner")
+BtnCorner4.CornerRadius = UDim.new(0, 8)
+BtnCorner4.Parent = StealEggButton
+
+StealEggButton.MouseEnter:Connect(function()
+    StealEggButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    StealEggButton.BorderColor3 = Color3.fromRGB(255, 100, 100)
+end)
+
+StealEggButton.MouseLeave:Connect(function()
+    StealEggButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    StealEggButton.BorderColor3 = Color3.fromRGB(200, 0, 0)
+end)
+
+-- Linha decorativa 3
+local Line3 = Instance.new("Frame")
+Line3.Size = UDim2.new(0.9, 0, 0, 2)
+Line3.Position = UDim2.new(0.05, 0, 0, 168)
+Line3.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+Line3.BorderSizePixel = 0
+Line3.Parent = MainFrame
+
+-- Botão Execute (reduzido)
+ExecuteButton.Size = UDim2.new(0, 160, 0, 40)
+ExecuteButton.Position = UDim2.new(0.5, -80, 0, 185)
 ExecuteButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 ExecuteButton.BorderSizePixel = 0
-ExecuteButton.Text = "⚡ EXECUTE"
+ExecuteButton.Text = "EXECUTE"
 ExecuteButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ExecuteButton.TextScaled = true
 ExecuteButton.Font = Enum.Font.GothamBold
 ExecuteButton.Parent = MainFrame
 
--- Corner do botão Execute
 local ExecuteCorner = Instance.new("UICorner")
 ExecuteCorner.CornerRadius = UDim.new(0, 8)
 ExecuteCorner.Parent = ExecuteButton
 
--- Efeito hover Execute
 ExecuteButton.MouseEnter:Connect(function()
     ExecuteButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    ExecuteButton.Size = UDim2.new(0, 210, 0, 55)
-    ExecuteButton.Position = UDim2.new(0.5, -105, 0, 167.5)
+    ExecuteButton.Size = UDim2.new(0, 170, 0, 44)
+    ExecuteButton.Position = UDim2.new(0.5, -85, 0, 183)
 end)
 
 ExecuteButton.MouseLeave:Connect(function()
     ExecuteButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-    ExecuteButton.Size = UDim2.new(0, 200, 0, 50)
-    ExecuteButton.Position = UDim2.new(0.5, -100, 0, 170)
+    ExecuteButton.Size = UDim2.new(0, 160, 0, 40)
+    ExecuteButton.Position = UDim2.new(0.5, -80, 0, 185)
 end)
 
--- Status Label
-StatusLabel.Size = UDim2.new(1, 0, 0, 30)
+-- Status Label (reduzido)
+StatusLabel.Size = UDim2.new(1, 0, 0, 25)
 StatusLabel.Position = UDim2.new(0, 0, 0, 240)
 StatusLabel.BackgroundTransparency = 1
-StatusLabel.Text = "🔴 Aguardando..."
+StatusLabel.Text = "Aguardando..."
 StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
 StatusLabel.TextScaled = true
 StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.Parent = MainFrame
 
--- Versão
+-- Versão (reduzido)
 local VersionLabel = Instance.new("TextLabel")
-VersionLabel.Size = UDim2.new(1, 0, 0, 20)
-VersionLabel.Position = UDim2.new(0, 0, 0, 280)
+VersionLabel.Size = UDim2.new(1, 0, 0, 18)
+VersionLabel.Position = UDim2.new(0, 0, 0, 272)
 VersionLabel.BackgroundTransparency = 1
-VersionLabel.Text = "v2.0 | By Nino 👑"
+VersionLabel.Text = "v2.0 | By Nino"
 VersionLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
 VersionLabel.TextScaled = true
 VersionLabel.Font = Enum.Font.Gotham
 VersionLabel.TextSize = 12
 VersionLabel.Parent = MainFrame
 
--- Variáveis para controle
+-- Botão de suporte (reduzido)
+local SupportButton = Instance.new("TextButton")
+SupportButton.Size = UDim2.new(0, 120, 0, 22)
+SupportButton.Position = UDim2.new(0.5, -60, 0, 300)
+SupportButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+SupportButton.BorderSizePixel = 0
+SupportButton.Text = "Suporte"
+SupportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SupportButton.TextScaled = true
+SupportButton.Font = Enum.Font.GothamBold
+SupportButton.Parent = MainFrame
+
+local SupportCorner = Instance.new("UICorner")
+SupportCorner.CornerRadius = UDim.new(0, 5)
+SupportCorner.Parent = SupportButton
+
+SupportButton.MouseButton1Click:Connect(function()
+    setclipboard("https://discord.gg/EPRNrCHWmS")
+    StatusLabel.Text = "Link copiado!"
+    StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    wait(2)
+    StatusLabel.Text = "Aguardando..."
+    StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
+end)
+
+-- Variáveis
 local selectedGame = nil
+
+-- Função para resetar cores dos botões
+local function ResetButtons()
+    BrookhavenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    MM2Button.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    PrisonLifeButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    StealEggButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+end
 
 -- Selecionar jogo
 BrookhavenButton.MouseButton1Click:Connect(function()
     selectedGame = "brookhaven"
-    StatusLabel.Text = "✅ Brookhaven selecionado"
+    StatusLabel.Text = "Brookhaven selecionado"
     StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    ResetButtons()
     BrookhavenButton.BackgroundColor3 = Color3.fromRGB(60, 20, 20)
-    MM2Button.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 end)
 
 MM2Button.MouseButton1Click:Connect(function()
     selectedGame = "mm2"
-    StatusLabel.Text = "✅ MM2 selecionado"
+    StatusLabel.Text = "MM2 selecionado"
     StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    ResetButtons()
     MM2Button.BackgroundColor3 = Color3.fromRGB(60, 20, 20)
-    BrookhavenButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 end)
 
--- Função para executar script
+PrisonLifeButton.MouseButton1Click:Connect(function()
+    selectedGame = "prisonlife"
+    StatusLabel.Text = "Prison Life selecionado"
+    StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    ResetButtons()
+    PrisonLifeButton.BackgroundColor3 = Color3.fromRGB(60, 20, 20)
+end)
+
+StealEggButton.MouseButton1Click:Connect(function()
+    selectedGame = "stealegg"
+    StatusLabel.Text = "Steal a Egg selecionado"
+    StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    ResetButtons()
+    StealEggButton.BackgroundColor3 = Color3.fromRGB(60, 20, 20)
+end)
+
+-- Função Execute com verificação de jogo
 local function ExecuteScript()
     if not selectedGame then
-        StatusLabel.Text = "❌ Selecione um jogo primeiro!"
+        StatusLabel.Text = "Selecione um jogo!"
         StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
         wait(2)
-        StatusLabel.Text = "🔴 Aguardando..."
+        StatusLabel.Text = "Aguardando..."
         StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
         return
     end
     
+    -- Verifica se está no jogo correto antes de executar
     if selectedGame == "brookhaven" then
         if PlaceID == BROOKHAVEN_ID then
-            StatusLabel.Text = "⚡ Executando Brookhaven..."
+            StatusLabel.Text = "Executando Brookhaven..."
             StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
             ExecuteButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-            
-            -- Script Brookhaven
             loadstring(game:HttpGet("https://encrypt-x.pages.dev/Scripts?Id=4538884947868"))("4538884947868")
-            
-            wait(2)
-            StatusLabel.Text = "✅ Brookhaven executado!"
+            wait(1)
+            StatusLabel.Text = "Brookhaven executado!"
             ExecuteButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
             wait(2)
-            StatusLabel.Text = "🔴 Aguardando..."
+            StatusLabel.Text = "Aguardando..."
             StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
         else
-            StatusLabel.Text = "❌ Entre no Brookhaven RP!"
+            StatusLabel.Text = "Erro: Entre no Brookhaven RP!"
             StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
             wait(2)
-            StatusLabel.Text = "🔴 Aguardando..."
+            StatusLabel.Text = "Aguardando..."
             StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
         end
     elseif selectedGame == "mm2" then
         if PlaceID == MM2_ID then
-            StatusLabel.Text = "⚡ Executando MM2..."
+            StatusLabel.Text = "Executando MM2..."
             StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
             ExecuteButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-            
-            -- Script MM2
             loadstring(game:HttpGet("https://encrypt-x.pages.dev/Scripts?Id=6705719160061"))("6705719160061")
-            
-            wait(2)
-            StatusLabel.Text = "✅ MM2 executado!"
+            wait(1)
+            StatusLabel.Text = "MM2 executado!"
             ExecuteButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
             wait(2)
-            StatusLabel.Text = "🔴 Aguardando..."
+            StatusLabel.Text = "Aguardando..."
             StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
         else
-            StatusLabel.Text = "❌ Entre no Murder Mystery 2!"
+            StatusLabel.Text = "Erro: Entre no Murder Mystery 2!"
             StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
             wait(2)
-            StatusLabel.Text = "🔴 Aguardando..."
+            StatusLabel.Text = "Aguardando..."
+            StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
+        end
+    elseif selectedGame == "prisonlife" then
+        if PlaceID == PRISON_LIFE_ID then
+            StatusLabel.Text = "Executando Prison Life..."
+            StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            ExecuteButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/emanuelsiqueira242-oss/Nova-era-hubb/refs/heads/main/PRISON%20LIFE%20NINO%20HUB"))()
+            wait(1)
+            StatusLabel.Text = "Prison Life executado!"
+            ExecuteButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+            wait(2)
+            StatusLabel.Text = "Aguardando..."
+            StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
+        else
+            StatusLabel.Text = "Erro: Entre no Prison Life!"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+            wait(2)
+            StatusLabel.Text = "Aguardando..."
+            StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
+        end
+    elseif selectedGame == "stealegg" then
+        if PlaceID == STEAL_EGG_ID then
+            StatusLabel.Text = "Executando Steal a Egg..."
+            StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            ExecuteButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/emanuelsiqueira242-oss/NINO-HUB/refs/heads/main/Nino%20Hub%20STEAL%20A%20EGG"))()
+            wait(1)
+            StatusLabel.Text = "Steal a Egg executado!"
+            ExecuteButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+            wait(2)
+            StatusLabel.Text = "Aguardando..."
+            StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
+        else
+            StatusLabel.Text = "Erro: Entre no Steal a Egg!"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+            wait(2)
+            StatusLabel.Text = "Aguardando..."
             StatusLabel.TextColor3 = Color3.fromRGB(200, 100, 100)
         end
     end
 end
 
--- Conectar botão Execute
 ExecuteButton.MouseButton1Click:Connect(ExecuteScript)
 
 -- Sistema de arrastar
