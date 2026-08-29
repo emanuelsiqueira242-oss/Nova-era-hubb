@@ -1,0 +1,438 @@
+-- =========================================================================
+-- NINO HUB - STEAL AN EGG ULTIMATE EDITION
+-- Converted to REDZ Library by @Gelado
+-- =========================================================================
+
+local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/psychoSAGAZ/REDZ-lib-TESTE/refs/heads/main/README.md"))()
+
+local Window = redzlib:MakeWindow({
+    Title = "Nino Hub",
+    SubTitle = "steal a egg script by Лукас?",
+    SaveFolder = "NinoEggHubConfig"
+})
+
+Window:AddMinimizeButton({
+    Button = {
+        Image = "rbxassetid://126766892830027",
+        BackgroundTransparency = 0
+    },
+    Corner = {
+        CornerRadius = UDim.new(0, 8)
+    },
+})
+
+-- =========================================================================
+-- VARIÁVEIS GLOBAIS
+-- =========================================================================
+local UserInputService = game:GetService('UserInputService')
+local TweenService = game:GetService('TweenService')
+local RunService = game:GetService('RunService')
+local Players = game:GetService('Players')
+local HttpService = game:GetService('HttpService')
+local SoundService = game:GetService('SoundService')
+local LocalPlayer = Players.LocalPlayer
+
+-- =========================================================================
+-- CONFIG SYSTEM
+-- =========================================================================
+local CONFIG_FILE = "Nino_EggHub_Config.json"
+
+local DefaultConfig = {
+    Language = "English",
+    UIScale = 1.0,
+    MainTransparency = 0.15,
+    ButtonTransparency = 0.25,
+    TPSpeed = 300,
+    PromptDistance = 50,
+    InstantPrompt = false,
+    AutoPrompt = false,
+    BypassEnabled = false,
+    TweenTPEnabled = false,
+    TPWalkEnabled = false,
+}
+
+local CurrentConfig = table.clone(DefaultConfig)
+
+local function SaveSettings()
+    if writefile then
+        pcall(function()
+            writefile(CONFIG_FILE, HttpService:JSONEncode(CurrentConfig))
+        end)
+    end
+end
+
+local function LoadSettings()
+    if readfile and isfile and isfile(CONFIG_FILE) then
+        pcall(function()
+            local loaded = HttpService:JSONDecode(readfile(CONFIG_FILE))
+            for k, v in pairs(loaded) do
+                CurrentConfig[k] = v
+            end
+        end)
+    end
+end
+
+LoadSettings()
+
+-- =========================================================================
+-- LOCALIZATION
+-- =========================================================================
+local LocalizedText = {
+    English = {
+        Tab1 = "🚀 Features",
+        Tab2 = "🎯 Prompts",
+        Tab3 = "📊 Server",
+        Bypass = "🛡️ Bypass Anti-Cheat",
+        TweenTP = "✨ Smooth Tween Teleport",
+        TPWalk = "🏃 Speed Hack (TP Walk)",
+        Speed = "🚀 Teleport Speed",
+        PromptStuds = "📏 Interaction Distance",
+        PromptInstant = "⚡ Instant Interact (0s Hold)",
+        PromptAuto = "🤖 Auto Interact Prompts",
+        FirePromptsNow = "💥 Trigger All Nearby Prompts",
+        Active = "✅ Active",
+        Disabled = "❌ Disabled",
+        CopyDiscord = "💬 Discord",
+        CopyLink = "🔗 LinkTree",
+        Copied = "✅ Copied!",
+        UpdatesHeader = "📌 System Updates",
+        Up1 = "✅ Anti-cheat bypass engine optimized",
+        Up2 = "✅ Responsive UI Animations added",
+        Up3 = "⚠️ Original theme locked"
+    },
+    Arabic = {
+        Tab1 = "🚀 المميزات",
+        Tab2 = "🎯 التفاعل",
+        Tab3 = "📊 السيرفر",
+        Bypass = "🛡️ تخطي الحماية",
+        TweenTP = "✨ تنقل سلس",
+        TPWalk = "🏃 الانتقال السريع",
+        Speed = "🚀 سرعة التنقل",
+        PromptStuds = "📏 مسافة التفاعل",
+        PromptInstant = "⚡ تفاعل فوري",
+        PromptAuto = "🤖 التفاعل التلقائي",
+        FirePromptsNow = "💥 تفعيل كل الأزرار",
+        Active = "✅ مفعل",
+        Disabled = "❌ معطل",
+        CopyDiscord = "💬 ديسكورد",
+        CopyLink = "🔗 رابط LinkTree",
+        Copied = "✅ تم النسخ!",
+        UpdatesHeader = "📌 آخر التحديثات",
+        Up1 = "✅ تحسين محرك تخطي الحماية",
+        Up2 = "✅ إضافة أنيميشن جديدة",
+        Up3 = "⚠️ تثبيت الثيم الأصلي"
+    }
+}
+
+local currentLang = CurrentConfig.Language
+local T = LocalizedText[currentLang]
+
+-- =========================================================================
+-- CRIAÇÃO DAS ABAS
+-- =========================================================================
+local Tab1 = Window:MakeTab({ "Features", "rocket" })
+local Tab2 = Window:MakeTab({ "Prompts", "hand" })
+local Tab3 = Window:MakeTab({ "Server", "globe" })
+
+-- =========================================================================
+-- VARIÁVEIS DE CONTROLE
+-- =========================================================================
+local BypassEnabled = CurrentConfig.BypassEnabled or false
+local TweenTPEnabled = CurrentConfig.TweenTPEnabled or false
+local TPWalkEnabled = CurrentConfig.TPWalkEnabled or false
+local InstantPrompt = CurrentConfig.InstantPrompt or false
+local AutoPrompt = CurrentConfig.AutoPrompt or false
+local TPSpeed = CurrentConfig.TPSpeed or 300
+local PromptDistance = CurrentConfig.PromptDistance or 50
+
+-- =========================================================================
+-- FUNÇÃO DE APLICAÇÃO DE PROXIMITY PROMPT
+-- =========================================================================
+local function ApplyProximityPromptSettings()
+    for _, prompt in ipairs(workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") then
+            if CurrentConfig.PromptDistance then
+                prompt.MaxActivationDistance = CurrentConfig.PromptDistance
+            end
+            if CurrentConfig.InstantPrompt then
+                prompt.HoldDuration = 0
+            end
+        end
+    end
+end
+
+workspace.DescendantAdded:Connect(function(descendant)
+    if descendant:IsA("ProximityPrompt") then
+        task.wait(0.1)
+        if CurrentConfig.PromptDistance then descendant.MaxActivationDistance = CurrentConfig.PromptDistance end
+        if CurrentConfig.InstantPrompt then descendant.HoldDuration = 0 end
+    end
+end)
+
+-- =========================================================================
+-- AUTO PROMPT LOOP
+-- =========================================================================
+task.spawn(function()
+    while task.wait(0.25) do
+        if CurrentConfig.AutoPrompt then
+            pcall(function()
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    for _, prompt in ipairs(workspace:GetDescendants()) do
+                        if prompt:IsA("ProximityPrompt") and prompt.Enabled then
+                            local parentPart = prompt.Parent
+                            if parentPart and parentPart:IsA("BasePart") then
+                                local dist = (hrp.Position - parentPart.Position).Magnitude
+                                if dist <= (CurrentConfig.PromptDistance or prompt.MaxActivationDistance) then
+                                    if fireproximityprompt then fireproximityprompt(prompt) end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- =========================================================================
+-- ABA 1: FEATURES
+-- =========================================================================
+Tab1:AddSection({ Name = "Anti-Cheat & Teleport" })
+
+-- BYPASS TOGGLE
+Tab1:AddToggle({
+    Name = T.Bypass,
+    Description = "Ativa/Desativa o bypass do anti-cheat",
+    Default = BypassEnabled,
+    Callback = function(state)
+        BypassEnabled = state
+        CurrentConfig.BypassEnabled = state
+        SaveSettings()
+        
+        if state then
+            local char = LocalPlayer.Character
+            if char then
+                local hum = char:FindFirstChildOfClass('Humanoid')
+                if hum then hum:Destroy() end
+                Instance.new('Humanoid', char)
+            end
+        end
+    end
+})
+
+-- TWEEN TP TOGGLE
+Tab1:AddToggle({
+    Name = T.TweenTP,
+    Description = "Teleporta suavemente para a área segura",
+    Default = TweenTPEnabled,
+    Callback = function(state)
+        TweenTPEnabled = state
+        CurrentConfig.TweenTPEnabled = state
+        SaveSettings()
+        
+        if state then
+            local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local hrp = char:WaitForChild("HumanoidRootPart", 5)
+            if char and hrp then
+                local targetPos = Vector3.new(542.45, 70.57, -367.75)
+                local distance = (hrp.Position - targetPos).Magnitude
+                local speed = CurrentConfig.TPSpeed > 0 and CurrentConfig.TPSpeed or 300
+                TweenService:Create(hrp, TweenInfo.new(distance / speed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPos)}):Play()
+            end
+        end
+    end
+})
+
+-- TP WALK TOGGLE
+Tab1:AddToggle({
+    Name = T.TPWalk,
+    Description = "Ativa o speed hack para andar rápido",
+    Default = TPWalkEnabled,
+    Callback = function(state)
+        TPWalkEnabled = state
+        CurrentConfig.TPWalkEnabled = state
+        SaveSettings()
+    end
+})
+
+-- SPEED SLIDER
+Tab1:AddSlider({
+    Name = T.Speed,
+    Min = 100,
+    Max = 600,
+    Default = TPSpeed,
+    Increase = 10,
+    Callback = function(value)
+        TPSpeed = value
+        CurrentConfig.TPSpeed = value
+        SaveSettings()
+    end
+})
+
+-- =========================================================================
+-- LOOP DO TP WALK
+-- =========================================================================
+RunService.Heartbeat:Connect(function(dt)
+    if TPWalkEnabled then
+        local char = LocalPlayer.Character
+        if char then
+            local hrp = char:FindFirstChild('HumanoidRootPart')
+            local hum = char:FindFirstChildOfClass('Humanoid')
+            if hrp and hum and hum.MoveDirection.Magnitude > 0 then
+                hrp.CFrame = hrp.CFrame + (hum.MoveDirection * (CurrentConfig.TPSpeed * dt))
+            end
+        end
+    end
+end)
+
+-- =========================================================================
+-- ABA 2: PROMPTS
+-- =========================================================================
+Tab2:AddSection({ Name = "Interaction Settings" })
+
+-- INSTANT PROMPT TOGGLE
+Tab2:AddToggle({
+    Name = T.PromptInstant,
+    Description = "Ativa interação instantânea (sem segurar)",
+    Default = InstantPrompt,
+    Callback = function(state)
+        InstantPrompt = state
+        CurrentConfig.InstantPrompt = state
+        SaveSettings()
+        ApplyProximityPromptSettings()
+    end
+})
+
+-- AUTO PROMPT TOGGLE
+Tab2:AddToggle({
+    Name = T.PromptAuto,
+    Description = "Ativa interação automática com prompts próximos",
+    Default = AutoPrompt,
+    Callback = function(state)
+        AutoPrompt = state
+        CurrentConfig.AutoPrompt = state
+        SaveSettings()
+    end
+})
+
+-- FIRE PROMPTS NOW BUTTON
+Tab2:AddButton({
+    Name = T.FirePromptsNow,
+    Description = "Ativa todos os prompts próximos manualmente",
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            for _, prompt in ipairs(workspace:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") and prompt.Enabled then
+                    local parentPart = prompt.Parent
+                    if parentPart and parentPart:IsA("BasePart") then
+                        local dist = (hrp.Position - parentPart.Position).Magnitude
+                        if dist <= CurrentConfig.PromptDistance then
+                            if fireproximityprompt then fireproximityprompt(prompt) end
+                        end
+                    end
+                end
+            end
+        end
+    end
+})
+
+-- DISTANCE SLIDER
+Tab2:AddSlider({
+    Name = T.PromptStuds,
+    Min = 10,
+    Max = 500,
+    Default = PromptDistance,
+    Increase = 5,
+    Callback = function(value)
+        PromptDistance = value
+        CurrentConfig.PromptDistance = value
+        SaveSettings()
+        ApplyProximityPromptSettings()
+    end
+})
+
+-- =========================================================================
+-- ABA 3: SERVER
+-- =========================================================================
+Tab3:AddSection({ Name = "Server Information" })
+
+-- STATUS LABELS
+local GameLabel = Tab3:AddParagraph({ Name = "🎮 Game", Value = "Loading..." })
+local PlayersLabel = Tab3:AddParagraph({ Name = "👥 Players", Value = "Loading..." })
+local PingLabel = Tab3:AddParagraph({ Name = "⚡ Ping", Value = "Loading..." })
+local FPSLabel = Tab3:AddParagraph({ Name = "🎞️ FPS", Value = "Loading..." })
+local MemoryLabel = Tab3:AddParagraph({ Name = "⚙️ Memory", Value = "Loading..." })
+
+Tab3:AddSection({ Name = "System Updates" })
+
+Tab3:AddParagraph({ Name = "📌", Value = "✅ Anti-cheat bypass engine optimized" })
+Tab3:AddParagraph({ Name = "📌", Value = "✅ Responsive UI Animations added" })
+Tab3:AddParagraph({ Name = "📌", Value = "⚠️ Original theme locked" })
+
+-- =========================================================================
+-- LOOP DE ATUALIZAÇÃO DO SERVIDOR
+-- =========================================================================
+task.spawn(function()
+    local fpsCount = 0
+    RunService.RenderStepped:Connect(function() fpsCount = fpsCount + 1 end)
+    
+    while task.wait(1) do
+        pcall(function()
+            local placeName = "Roblox Game"
+            local success, result = pcall(function()
+                return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+            end)
+            if success then placeName = result end
+            
+            local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+            local mem = math.floor(game:GetService("Stats"):GetTotalMemoryUsageMb())
+            
+            GameLabel:SetValue(tostring(placeName))
+            PlayersLabel:SetValue(tostring(#Players:GetPlayers()) .. " / " .. tostring(Players.MaxPlayers))
+            PingLabel:SetValue(tostring(ping) .. " ms")
+            FPSLabel:SetValue(tostring(fpsCount))
+            MemoryLabel:SetValue(tostring(mem) .. " MB")
+        end)
+        fpsCount = 0
+    end
+end)
+
+-- =========================================================================
+-- LINGUAGEM E CONFIGURAÇÕES
+-- =========================================================================
+Window:EditOpenButton({
+    Title = currentLang == "English" and "🌐 English" or "🌐 العربية",
+    Icon = "globe",
+    CornerRadius = UDim.new(0, 16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new(
+        Color3.fromRGB(255, 200, 50),
+        Color3.fromRGB(255, 215, 0)
+    ),
+    OnlyMobile = false,
+    Enabled = true,
+    Draggable = true,
+    Callback = function()
+        CurrentConfig.Language = (CurrentConfig.Language == "Arabic") and "English" or "Arabic"
+        currentLang = CurrentConfig.Language
+        SaveSettings()
+        
+        -- Recarrega o script para aplicar o novo idioma
+        local script = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("NinoEggHub")
+        if script then script:Destroy() end
+        
+        print("[NINO HUB] Idioma alterado para: " .. currentLang .. " - Reinicie o script para aplicar.")
+    end
+})
+
+-- =========================================================================
+-- INFORMAÇÕES ADICIONAIS
+-- =========================================================================
+print("[NINO HUB] Carregado com sucesso!")
+print("[NINO HUB] steal a egg script by Лукас?")
+print("[NINO HUB] Idioma: " .. currentLang)
+print("[NINO HUB] Use o botão flutuante para abrir a interface")
