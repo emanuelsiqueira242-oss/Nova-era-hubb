@@ -142,7 +142,7 @@ local PromptDistance = CurrentConfig.PromptDistance or 50
 -- SISTEMA TP BASE
 -- =========================================================================
 local BasePosition = Vector3.new(542.45, 70.57, -367.75)
-local TPBaseSpeed = 700  -- Velocidade do TP Base
+local TPBaseSpeed = 630  -- Velocidade do TP Base
 local HoldingEgg = false
 local LastEggTime = 0
 local StopTPBase = false
@@ -449,7 +449,7 @@ end)
 -- =========================================================================
 Tab1:AddSection({ Name = "Anti-Cheat & Teleport" })
 
--- BYPASS TOGGLE
+-- BYPASS TOGGLE (SISTEMA ORIGINAL SIMPLES)
 Tab1:AddToggle({
     Name = T.Bypass,
     Description = "Ativa/Desativa o bypass do anti-cheat",
@@ -460,6 +460,7 @@ Tab1:AddToggle({
         SaveSettings()
         
         if state then
+            -- Ativa bypass
             local char = LocalPlayer.Character
             if char then
                 local hum = char:FindFirstChildOfClass('Humanoid')
@@ -467,6 +468,7 @@ Tab1:AddToggle({
                 Instance.new('Humanoid', char)
             end
         else
+            -- Desativa bypass e mata o personagem (reset)
             local Character = LocalPlayer.Character
             if Character then
                 local Humanoid = Character:FindFirstChildOfClass("Humanoid")
@@ -481,7 +483,7 @@ Tab1:AddToggle({
 -- TP BASE TOGGLE (ABRE GUI)
 Tab1:AddToggle({
     Name = T.TPBase,
-    Description = "Abre o controle do TP Base (Velocidade: 700)",
+    Description = "Abre o controle do TP Base (Velocidade: 630)",
     Default = false,
     Callback = function(state)
         if state then
@@ -616,5 +618,5 @@ Tab2:AddSlider({
 print("[NINO HUB] Carregado com sucesso!")
 print("[NINO HUB] steal a egg script by Lucas?")
 print("[NINO HUB] Idioma: " .. currentLang)
-print("[NINO HUB] TP Base velocidade: 700")
+print("[NINO HUB] TP Base velocidade: 630")
 print("[NINO HUB] Use o botão flutuante para abrir a interface")
