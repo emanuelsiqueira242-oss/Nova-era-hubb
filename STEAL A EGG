@@ -7,7 +7,7 @@ local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/psych
 
 local Window = redzlib:MakeWindow({
     Title = "Nino Hub",
-    SubTitle = "steal a egg script by Лукас?",
+    SubTitle = "steal a egg script by Lucas?",
     SaveFolder = "NinoEggHubConfig"
 })
 
@@ -29,7 +29,6 @@ local TweenService = game:GetService('TweenService')
 local RunService = game:GetService('RunService')
 local Players = game:GetService('Players')
 local HttpService = game:GetService('HttpService')
-local SoundService = game:GetService('SoundService')
 local LocalPlayer = Players.LocalPlayer
 
 -- =========================================================================
@@ -39,15 +38,12 @@ local CONFIG_FILE = "Nino_EggHub_Config.json"
 
 local DefaultConfig = {
     Language = "English",
-    UIScale = 1.0,
-    MainTransparency = 0.15,
-    ButtonTransparency = 0.25,
     TPSpeed = 300,
     PromptDistance = 50,
     InstantPrompt = false,
     AutoPrompt = false,
     BypassEnabled = false,
-    TweenTPEnabled = false,
+    TPBaseEnabled = false,
     TPWalkEnabled = false,
 }
 
@@ -79,48 +75,28 @@ LoadSettings()
 -- =========================================================================
 local LocalizedText = {
     English = {
-        Tab1 = "🚀 Features",
-        Tab2 = "🎯 Prompts",
-        Tab3 = "📊 Server",
-        Bypass = "🛡️ Bypass Anti-Cheat",
-        TweenTP = "✨ Smooth Tween Teleport",
-        TPWalk = "🏃 Speed Hack (TP Walk)",
-        Speed = "🚀 Teleport Speed",
-        PromptStuds = "📏 Interaction Distance",
-        PromptInstant = "⚡ Instant Interact (0s Hold)",
-        PromptAuto = "🤖 Auto Interact Prompts",
-        FirePromptsNow = "💥 Trigger All Nearby Prompts",
-        Active = "✅ Active",
-        Disabled = "❌ Disabled",
-        CopyDiscord = "💬 Discord",
-        CopyLink = "🔗 LinkTree",
-        Copied = "✅ Copied!",
-        UpdatesHeader = "📌 System Updates",
-        Up1 = "✅ Anti-cheat bypass engine optimized",
-        Up2 = "✅ Responsive UI Animations added",
-        Up3 = "⚠️ Original theme locked"
+        Tab1 = "Features",
+        Tab2 = "Prompts",
+        Bypass = "Bypass Anti-Cheat",
+        TPBase = "TP Base",
+        TPWalk = "Speed Hack (TP Walk)",
+        Speed = "Teleport Speed",
+        PromptStuds = "Interaction Distance",
+        PromptInstant = "Instant Interact (0s Hold)",
+        PromptAuto = "Auto Interact Prompts",
+        FirePromptsNow = "Trigger All Nearby Prompts"
     },
     Arabic = {
-        Tab1 = "🚀 المميزات",
-        Tab2 = "🎯 التفاعل",
-        Tab3 = "📊 السيرفر",
-        Bypass = "🛡️ تخطي الحماية",
-        TweenTP = "✨ تنقل سلس",
-        TPWalk = "🏃 الانتقال السريع",
-        Speed = "🚀 سرعة التنقل",
-        PromptStuds = "📏 مسافة التفاعل",
-        PromptInstant = "⚡ تفاعل فوري",
-        PromptAuto = "🤖 التفاعل التلقائي",
-        FirePromptsNow = "💥 تفعيل كل الأزرار",
-        Active = "✅ مفعل",
-        Disabled = "❌ معطل",
-        CopyDiscord = "💬 ديسكورد",
-        CopyLink = "🔗 رابط LinkTree",
-        Copied = "✅ تم النسخ!",
-        UpdatesHeader = "📌 آخر التحديثات",
-        Up1 = "✅ تحسين محرك تخطي الحماية",
-        Up2 = "✅ إضافة أنيميشن جديدة",
-        Up3 = "⚠️ تثبيت الثيم الأصلي"
+        Tab1 = "المميزات",
+        Tab2 = "التفاعل",
+        Bypass = "تخطي الحماية",
+        TPBase = "نقل للقاعدة",
+        TPWalk = "الانتقال السريع",
+        Speed = "سرعة التنقل",
+        PromptStuds = "مسافة التفاعل",
+        PromptInstant = "تفاعل فوري",
+        PromptAuto = "التفاعل التلقائي",
+        FirePromptsNow = "تفعيل كل الأزرار"
     }
 }
 
@@ -132,18 +108,280 @@ local T = LocalizedText[currentLang]
 -- =========================================================================
 local Tab1 = Window:MakeTab({ "Features", "rocket" })
 local Tab2 = Window:MakeTab({ "Prompts", "hand" })
-local Tab3 = Window:MakeTab({ "Server", "globe" })
 
 -- =========================================================================
 -- VARIÁVEIS DE CONTROLE
 -- =========================================================================
 local BypassEnabled = CurrentConfig.BypassEnabled or false
-local TweenTPEnabled = CurrentConfig.TweenTPEnabled or false
+local TPBaseEnabled = CurrentConfig.TPBaseEnabled or false
 local TPWalkEnabled = CurrentConfig.TPWalkEnabled or false
 local InstantPrompt = CurrentConfig.InstantPrompt or false
 local AutoPrompt = CurrentConfig.AutoPrompt or false
 local TPSpeed = CurrentConfig.TPSpeed or 300
 local PromptDistance = CurrentConfig.PromptDistance or 50
+
+-- =========================================================================
+-- SISTEMA TP BASE
+-- =========================================================================
+local BasePosition = Vector3.new(542.45, 70.57, -367.75)
+local TPBaseSpeed = 550  -- Velocidade atualizada para 550
+local HoldingEgg = false
+local LastEggTime = 0
+local StopTPBase = false  -- Nova variável para parar o TP
+local CurrentTween = nil   -- Para armazenar o tween atual
+
+-- DETECÇÃO DE OVO VIA PROXIMITYPROMPT
+local Keywords = {
+    "egg",
+    "ovo",
+    "collect",
+    "grab",
+    "pickup",
+    "steal"
+}
+
+local function IsEggPrompt(Prompt)
+    local Text = string.lower(
+        (Prompt.Name or "") ..
+        " " ..
+        (Prompt.ActionText or "") ..
+        " " ..
+        (Prompt.ObjectText or "")
+    )
+
+    for _, Word in ipairs(Keywords) do
+        if string.find(Text, Word) then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function RegisterPrompt(Prompt)
+    if not Prompt:IsA("ProximityPrompt") then
+        return
+    end
+
+    if not IsEggPrompt(Prompt) then
+        return
+    end
+
+    Prompt.Triggered:Connect(function(Player)
+        if Player ~= LocalPlayer then
+            return
+        end
+
+        HoldingEgg = true
+        LastEggTime = tick()
+        StopTPBase = false  -- Reset do stop quando novo ovo é detectado
+
+        print("[TP BASE] Possível ovo detectado.")
+    end)
+end
+
+for _, Obj in ipairs(workspace:GetDescendants()) do
+    RegisterPrompt(Obj)
+end
+
+workspace.DescendantAdded:Connect(RegisterPrompt)
+
+-- FUNÇÃO DE RETORNO À BASE
+local function ReturnToBase()
+    local Character = LocalPlayer.Character
+    local HRP = Character and Character:FindFirstChild("HumanoidRootPart")
+
+    if not HRP then
+        return
+    end
+
+    local Distance = (HRP.Position - BasePosition).Magnitude
+    local Speed = TPBaseSpeed
+
+    -- Cancela tween anterior se existir
+    if CurrentTween then
+        CurrentTween:Cancel()
+    end
+
+    CurrentTween = TweenService:Create(
+        HRP,
+        TweenInfo.new(Distance / Speed, Enum.EasingStyle.Linear),
+        {
+            CFrame = CFrame.new(BasePosition)
+        }
+    )
+
+    CurrentTween:Play()
+end
+
+-- FUNÇÃO PARA PARAR O TP
+local function StopReturnToBase()
+    StopTPBase = true
+    HoldingEgg = false
+    
+    if CurrentTween then
+        CurrentTween:Cancel()
+        CurrentTween = nil
+    end
+    
+    print("[TP BASE] TP parado manualmente.")
+end
+
+-- LOOP DO TP BASE
+task.spawn(function()
+    while task.wait(0.25) do
+        if not TPBaseEnabled then
+            continue
+        end
+
+        if StopTPBase then
+            continue
+        end
+
+        if HoldingEgg then
+            ReturnToBase()
+            HoldingEgg = false
+        end
+
+        -- Segurança para limpar estado antigo
+        if tick() - LastEggTime > 10 then
+            HoldingEgg = false
+        end
+    end
+end)
+
+-- =========================================================================
+-- GUI DO TP BASE (ARRÁSTAVEL)
+-- =========================================================================
+local function CreateTPBaseGUI()
+    -- Remove GUI antiga se existir
+    if LocalPlayer.PlayerGui:FindFirstChild("TPBaseControlGUI") then
+        LocalPlayer.PlayerGui:FindFirstChild("TPBaseControlGUI"):Destroy()
+    end
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "TPBaseControlGUI"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = LocalPlayer.PlayerGui
+
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 200, 0, 80)
+    MainFrame.Position = UDim2.new(0.7, 0, 0.3, 0)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Parent = ScreenGui
+
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 8)
+    UICorner.Parent = MainFrame
+
+    -- Título
+    local TitleBar = Instance.new("TextLabel")
+    TitleBar.Size = UDim2.new(1, 0, 0, 25)
+    TitleBar.BackgroundTransparency = 1
+    TitleBar.Text = "TP Base Control"
+    TitleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleBar.Font = Enum.Font.GothamBold
+    TitleBar.TextSize = 14
+    TitleBar.Parent = MainFrame
+
+    -- Toggle TP Base
+    local ToggleTP = Instance.new("TextButton")
+    ToggleTP.Size = UDim2.new(0.45, 0, 0, 35)
+    ToggleTP.Position = UDim2.new(0.025, 0, 0, 35)
+    ToggleTP.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+    ToggleTP.Text = "TP BASE OFF"
+    ToggleTP.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleTP.Font = Enum.Font.GothamBold
+    ToggleTP.TextSize = 12
+    ToggleTP.BorderSizePixel = 0
+    ToggleTP.Parent = MainFrame
+
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 5)
+    ToggleCorner.Parent = ToggleTP
+
+    -- Botão Stop
+    local StopButton = Instance.new("TextButton")
+    StopButton.Size = UDim2.new(0.45, 0, 0, 35)
+    StopButton.Position = UDim2.new(0.525, 0, 0, 35)
+    StopButton.BackgroundColor3 = Color3.fromRGB(200, 120, 0)
+    StopButton.Text = "STOP"
+    StopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    StopButton.Font = Enum.Font.GothamBold
+    StopButton.TextSize = 12
+    StopButton.BorderSizePixel = 0
+    StopButton.Parent = MainFrame
+
+    local StopCorner = Instance.new("UICorner")
+    StopCorner.CornerRadius = UDim.new(0, 5)
+    StopCorner.Parent = StopButton
+
+    -- Lógica do Toggle
+    ToggleTP.MouseButton1Click:Connect(function()
+        TPBaseEnabled = not TPBaseEnabled
+        CurrentConfig.TPBaseEnabled = TPBaseEnabled
+        SaveSettings()
+
+        if TPBaseEnabled then
+            ToggleTP.Text = "TP BASE ON"
+            ToggleTP.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+            StopTPBase = false
+        else
+            ToggleTP.Text = "TP BASE OFF"
+            ToggleTP.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+            StopTPBase = true
+            if CurrentTween then
+                CurrentTween:Cancel()
+                CurrentTween = nil
+            end
+        end
+    end)
+
+    -- Lógica do Stop
+    StopButton.MouseButton1Click:Connect(function()
+        StopReturnToBase()
+    end)
+
+    -- Sistema de arrastar
+    local dragging = false
+    local dragInput
+    local dragStart
+    local startPos
+
+    TitleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    TitleBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
 
 -- =========================================================================
 -- FUNÇÃO DE APLICAÇÃO DE PROXIMITY PROMPT
@@ -204,7 +442,7 @@ Tab1:AddSection({ Name = "Anti-Cheat & Teleport" })
 -- BYPASS TOGGLE
 Tab1:AddToggle({
     Name = T.Bypass,
-    Description = "Ativa/Desativa o bypass do anti-cheat",
+    Description = "Ativa/Desativa o bypass do anti-cheat (Desativar mata o personagem)",
     Default = BypassEnabled,
     Callback = function(state)
         BypassEnabled = state
@@ -212,35 +450,45 @@ Tab1:AddToggle({
         SaveSettings()
         
         if state then
+            -- Ativa bypass
             local char = LocalPlayer.Character
             if char then
                 local hum = char:FindFirstChildOfClass('Humanoid')
                 if hum then hum:Destroy() end
                 Instance.new('Humanoid', char)
             end
+        else
+            -- Desativa bypass e mata o personagem (reset)
+            local char = LocalPlayer.Character
+            if char then
+                local hum = char:FindFirstChildOfClass('Humanoid')
+                if hum then
+                    hum.Health = 0
+                end
+            end
         end
     end
 })
 
--- TWEEN TP TOGGLE
+-- TP BASE TOGGLE (ABRE GUI)
 Tab1:AddToggle({
-    Name = T.TweenTP,
-    Description = "Teleporta suavemente para a área segura",
-    Default = TweenTPEnabled,
+    Name = T.TPBase,
+    Description = "Abre o controle do TP Base (Velocidade: 550)",
+    Default = false,
     Callback = function(state)
-        TweenTPEnabled = state
-        CurrentConfig.TweenTPEnabled = state
-        SaveSettings()
-        
         if state then
-            local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-            local hrp = char:WaitForChild("HumanoidRootPart", 5)
-            if char and hrp then
-                local targetPos = Vector3.new(542.45, 70.57, -367.75)
-                local distance = (hrp.Position - targetPos).Magnitude
-                local speed = CurrentConfig.TPSpeed > 0 and CurrentConfig.TPSpeed or 300
-                TweenService:Create(hrp, TweenInfo.new(distance / speed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPos)}):Play()
+            CreateTPBaseGUI()
+            print("[TP BASE] GUI de controle aberto.")
+        else
+            -- Remove GUI se existir
+            local gui = LocalPlayer.PlayerGui:FindFirstChild("TPBaseControlGUI")
+            if gui then
+                gui:Destroy()
             end
+            TPBaseEnabled = false
+            CurrentConfig.TPBaseEnabled = false
+            SaveSettings()
+            print("[TP BASE] GUI de controle fechado.")
         end
     end
 })
@@ -356,83 +604,10 @@ Tab2:AddSlider({
 })
 
 -- =========================================================================
--- ABA 3: SERVER
--- =========================================================================
-Tab3:AddSection({ Name = "Server Information" })
-
--- STATUS LABELS
-local GameLabel = Tab3:AddParagraph({ Name = "🎮 Game", Value = "Loading..." })
-local PlayersLabel = Tab3:AddParagraph({ Name = "👥 Players", Value = "Loading..." })
-local PingLabel = Tab3:AddParagraph({ Name = "⚡ Ping", Value = "Loading..." })
-local FPSLabel = Tab3:AddParagraph({ Name = "🎞️ FPS", Value = "Loading..." })
-local MemoryLabel = Tab3:AddParagraph({ Name = "⚙️ Memory", Value = "Loading..." })
-
-Tab3:AddSection({ Name = "System Updates" })
-
-Tab3:AddParagraph({ Name = "📌", Value = "✅ Anti-cheat bypass engine optimized" })
-Tab3:AddParagraph({ Name = "📌", Value = "✅ Responsive UI Animations added" })
-Tab3:AddParagraph({ Name = "📌", Value = "⚠️ Original theme locked" })
-
--- =========================================================================
--- LOOP DE ATUALIZAÇÃO DO SERVIDOR
--- =========================================================================
-task.spawn(function()
-    local fpsCount = 0
-    RunService.RenderStepped:Connect(function() fpsCount = fpsCount + 1 end)
-    
-    while task.wait(1) do
-        pcall(function()
-            local placeName = "Roblox Game"
-            local success, result = pcall(function()
-                return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
-            end)
-            if success then placeName = result end
-            
-            local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
-            local mem = math.floor(game:GetService("Stats"):GetTotalMemoryUsageMb())
-            
-            GameLabel:SetValue(tostring(placeName))
-            PlayersLabel:SetValue(tostring(#Players:GetPlayers()) .. " / " .. tostring(Players.MaxPlayers))
-            PingLabel:SetValue(tostring(ping) .. " ms")
-            FPSLabel:SetValue(tostring(fpsCount))
-            MemoryLabel:SetValue(tostring(mem) .. " MB")
-        end)
-        fpsCount = 0
-    end
-end)
-
--- =========================================================================
--- LINGUAGEM E CONFIGURAÇÕES
--- =========================================================================
-Window:EditOpenButton({
-    Title = currentLang == "English" and "🌐 English" or "🌐 العربية",
-    Icon = "globe",
-    CornerRadius = UDim.new(0, 16),
-    StrokeThickness = 2,
-    Color = ColorSequence.new(
-        Color3.fromRGB(255, 200, 50),
-        Color3.fromRGB(255, 215, 0)
-    ),
-    OnlyMobile = false,
-    Enabled = true,
-    Draggable = true,
-    Callback = function()
-        CurrentConfig.Language = (CurrentConfig.Language == "Arabic") and "English" or "Arabic"
-        currentLang = CurrentConfig.Language
-        SaveSettings()
-        
-        -- Recarrega o script para aplicar o novo idioma
-        local script = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("NinoEggHub")
-        if script then script:Destroy() end
-        
-        print("[NINO HUB] Idioma alterado para: " .. currentLang .. " - Reinicie o script para aplicar.")
-    end
-})
-
--- =========================================================================
 -- INFORMAÇÕES ADICIONAIS
 -- =========================================================================
 print("[NINO HUB] Carregado com sucesso!")
-print("[NINO HUB] steal a egg script by Лукас?")
+print("[NINO HUB] steal a egg script by Lucas?")
 print("[NINO HUB] Idioma: " .. currentLang)
+print("[NINO HUB] TP Base velocidade: 550")
 print("[NINO HUB] Use o botão flutuante para abrir a interface")
